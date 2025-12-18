@@ -1,0 +1,26 @@
+1. Setup trước tiên
+    conda create -n ###### python==3.9.1
+    conda activate ######
+    pip install -r requirements.txt
+
+2. Chạy 3 dòng này sau mỗi lần test --> Lưu những file muốn lưu trước khi chạy, vì nó sẽ xoá hết results, logs và plots
+    Remove-Item -Recurse -Force results -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force logs -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force plots -ErrorAction SilentlyContinue
+
+# SỬA FILE CONFIG
+
+
+3. Quy trình chạy chuẩn
+    python main.py -m train 
+    python main.py -m test 
+    python run_baseline.py
+    python plot_results.py ra các plot, kiểm tra trong thư mục gốc
+
+
+4. Train tiếp tục trên model có sẵn
+- Sửa CONFIG  
+    1. current_trained_steps
+    2. số lượng steps mong muốn train, dựa trên num_envs và n_steps
+    3. LƯU Ý: generator parameters của các lần train phải giống nhau
+- python main.py --mode train --model_path "KÉO PATH CỦA CHECKPOINT MÌNH MUỐN TRAIN TIẾP VÀO ĐÂY"
