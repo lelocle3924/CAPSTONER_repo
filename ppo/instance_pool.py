@@ -191,8 +191,6 @@ class InstancePool:
         else:
             return [self.instances[i] for i in selected_indices]
 
-    def get_sampling_stats(self) -> Dict[str, Any]:
-        """Return sampling statistics"""
         return {
             "total_samples": self.total_samples,
             "min_samples": np.min(self.sample_counts),
@@ -201,3 +199,12 @@ class InstancePool:
             "std_samples": np.std(self.sample_counts),
             "current_seed": self.current_seed if self.seed is not None else None,
         }
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_executor'] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._executor = None

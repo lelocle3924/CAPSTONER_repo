@@ -1,8 +1,1 @@
-time train log
-    dim151_cap64_step1600: 22 phút
-
-
-
-Cách nào để dùng model trained cho 150 khách hàng giải được instance 300, 400 khách hàng?
-
 The #pragma: no cover line is irrelevant to our purposes

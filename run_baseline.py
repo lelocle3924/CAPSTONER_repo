@@ -5,7 +5,7 @@ import os
 
 from core import LightLogger, VRPTWGeneratorR, VRPTWGeneratorC
 from config import PPOConfig, ALNSConfig
-from alns.vrp import runner
+from base_alns.vrp import runner
 
 # --- KHỞI TẠO ---
 ppo_config = PPOConfig()

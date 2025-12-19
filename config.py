@@ -7,7 +7,7 @@ class PPOConfig:
     # GENERATOR CONFIG
     generator_type: str = "R"  # Generator type ["R", "C"]
     
-    dimension: int = 51  # SỬA Ở ĐÂY NÈ
+    dimension: int = 151  # SỬA Ở ĐÂY NÈ
     capacity: int = 64  # Vehicle capacity
     num_vehicles: int = dimension  # Number of vehicles
     max_travel_time: int = 50  # THỜI LƯỢNG TỐI ĐA CHO 1 ROUTE LÀ BAO NHIÊU ----------------> CHÍNH LÀ CHỖ CONSTRAINTS MUST NOT BE MORE THAN 10 HOUR ROUTES
@@ -46,20 +46,21 @@ class PPOConfig:
     training_no_refresh: bool = (False)  # Whether training instance pool should not refresh
     
     # TEST CONFIG
-    n_eval_envs: int = 1  # Number of evaluation environments
-    eval_seed: int = 123  # Evaluation random seed
-    eval_freq: int = 2000  # Evaluation frequency
-    eval_pool_size: int = 100  # Evaluation instance pool size
-    eval_sampling_memory: int = 100  # Evaluation instance pool sampling memory
-    eval_chunk_size: int = 20  # Evaluation instance pool batch size
-    eval_max_workers: int = 2  # Evaluation instance pool max workers
-    eval_no_refresh: bool = True  # Whether evaluation instance pool should not refresh
+    n_eval_envs: int = 1  
+    eval_seed: int = 123 
+    eval_freq: int = 2000 
+    eval_pool_size: int = 100 
+    eval_sampling_memory: int = 100  
+    eval_chunk_size: int = 20 
+    eval_max_workers: int = 2 
+    eval_no_refresh: bool = True 
 
-    test_seed: int = 369  # Test random seed
-    test_instances: int = 10  # Number of test instances
+    test_seed: int = 369
+    test_instances: int = 10 
+    stop_threshold: float = 1000 #     SỐ LẦN AGENT RA QUYẾT ĐỊNH STOP TRƯỚC KHI KẾT THÚC EPISODE
 
     # OTHER CONFIG
-    num_flag: int = 51 #dimension
+    num_flag: int = 151 #dimension
     tensorboard_log: str = f"./logs/dim{num_flag}cap{capacity}/log{total_timesteps}/"
     model_save_path: str = (f"./models/model{num_flag}_{generator_type}/capacity_{capacity}")
     log_dir = tensorboard_log
@@ -70,7 +71,7 @@ class PPOConfig:
 @dataclass
 class ALNSConfig:
     seed: int = 520  # Algorithm random seed
-    num_iterations: int = 25  # Number of iterations
+    num_iterations: int = 125  # Number of iterations
     num_destroy: int = 5  # Number of destroy operators
     num_repair: int = 3  # Number of repair operators
     roulette_wheel_scores: list[float] = field(

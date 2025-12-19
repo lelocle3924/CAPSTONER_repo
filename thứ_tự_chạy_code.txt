@@ -12,8 +12,8 @@
 
 
 3. Quy trình chạy chuẩn
-    python main.py -m train 
-    python main.py -m test 
+    python main.py -m train -p 
+    python main.py -m test -p 
     python run_baseline.py
     python plot_results.py ra các plot, kiểm tra trong thư mục gốc
 
