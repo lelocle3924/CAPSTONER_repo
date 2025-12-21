@@ -31,14 +31,54 @@ class VehicleType:
 # ==========================================
 # PART 2: PROBLEM DATA (Static Context)
 # ==========================================
+# @dataclass
+# class ProblemData:
+#     """
+#     Container for all static data. Read-only during optimization.
+#     """
+#     # --- Matrices ---
+#     dist_matrix: np.ndarray # (N, N) Meters
+#     super_time_matrix: np.ndarray # (num_vehicle_types,N, N) Minutes
+
+#     # --- Node Info (Index 0 = Depot) ---
+#     node_ids: List[str]     # ID Mapping
+#     coords: np.ndarray      # (N, 2) [Lat, Lon]
+#     demands_kg: np.ndarray  # (N,)
+#     demands_cbm: np.ndarray # (N,)
+#     time_windows: np.ndarray # (N, 2) Minutes from start
+#     service_times: np.ndarray # (N,) Minutes
+#     allowed_vehicles: List[List[int]] # Node constraints
+
+#     # --- Fleet Info ---
+#     vehicle_types: List[VehicleType]
+
+#     # --- Global constraint for route max time ---
+#     max_route_duration: float = 6000.0 # minutes = 10 hours
+
+#     # --- Helpers ---
+#     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
+
+#     def __post_init__(self):
+#         for idx, node_id in enumerate(self.node_ids):
+#             self._id_to_index[str(node_id)] = idx
+
+#     @property
+#     def num_nodes(self) -> int:
+#         return len(self.node_ids)
+    
+#     #Helper để lấy thời gian di chuyển chuẩn xác cho từng loại xe
+#     def get_travel_time(self, from_node: int, to_node: int, vehicle_type_id: int) -> float:
+#         return self.super_time_matrix[vehicle_type_id, from_node, to_node]
+
 @dataclass
 class ProblemData:
+    # ... (Các fields giữ nguyên) ...
     """
     Container for all static data. Read-only during optimization.
     """
     # --- Matrices ---
     dist_matrix: np.ndarray # (N, N) Meters
-    time_matrix: np.ndarray # (N, N) Minutes
+    super_time_matrix: np.ndarray # (num_vehicle_types,N, N) Minutes
 
     # --- Node Info (Index 0 = Depot) ---
     node_ids: List[str]     # ID Mapping
@@ -49,22 +89,60 @@ class ProblemData:
     service_times: np.ndarray # (N,) Minutes
     allowed_vehicles: List[List[int]] # Node constraints
 
-    # --- Fleet Info ---
     vehicle_types: List[VehicleType]
 
-    # --- Global constraint for route max time ---
-    max_route_duration: float = 600.0 # minutes = 10 hours
+    max_route_duration: float = 6000.0 # minutes = 10 hours
 
-    # --- Helpers ---
     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
+
+    _static_tw_tightness: float = field(init=False, default=0.0)
+    _static_spatial_density: float = field(init=False, default=0.0)
 
     def __post_init__(self):
         for idx, node_id in enumerate(self.node_ids):
             self._id_to_index[str(node_id)] = idx
+            
+        # --- CALCULATE STATIC FEATURES IMMEDIATELY ---
+        self._calculate_static_features()
+
+    def _calculate_static_features(self):
+        # 1. TW Tightness
+        # width = End - Start. Avoid division by zero.
+        widths = self.time_windows[:, 1] - self.time_windows[:, 0]
+        safe_widths = np.maximum(widths, 1.0) # Min width 1 min
+        
+        # Chỉ tính cho Customer (bỏ Depot index 0)
+        cust_service = self.service_times[1:]
+        cust_widths = safe_widths[1:]
+        
+        if len(cust_widths) > 0:
+            # Ratio: Service / Width. (e.g. Service 10m, Width 20m -> 0.5)
+            # Càng gần 1 càng chặt.
+            self._static_tw_tightness = float(np.mean(cust_service / cust_widths))
+        
+        # 2. Spatial Density (Based on Dist Matrix)
+        cust_dist = self.dist_matrix[1:, 1:]
+        
+        if cust_dist.shape[0] > 1:
+            # Thay số 0 ở đường chéo bằng vô cực để tìm min không phải chính nó
+            temp_dist = cust_dist.copy()
+            np.fill_diagonal(temp_dist, np.inf)
+            
+            # Tìm khoảng cách đến hàng xóm gần nhất cho mỗi node
+            min_dists = np.min(temp_dist, axis=1)
+            avg_min_dist = np.mean(min_dists)
+            
+            # Density = 1000 / AvgDist (Để số không quá nhỏ, đơn vị node/km)
+            # Nếu AvgDist = 500m -> Density = 2.0
+            self._static_spatial_density = 1000.0 / (avg_min_dist + 1.0)
+            
+    @property
+    def static_tw_tightness(self) -> float:
+        return self._static_tw_tightness
 
     @property
-    def num_nodes(self) -> int:
-        return len(self.node_ids)
+    def static_spatial_density(self) -> float:
+        return self._static_spatial_density
 
 # ==========================================
 # PART 3: SOLUTION REPRESENTATION (Route & State)
@@ -88,6 +166,7 @@ class Route:
     is_time_feasible: bool = True
     is_capacity_feasible: bool = True
     is_duration_feasible: bool = True
+    is_preference_feasible: bool = True
     
     @property
     def cost(self) -> float:
@@ -116,7 +195,7 @@ class Route:
 
     @property
     def is_feasible(self) -> bool:
-        return self.is_time_feasible and self.is_capacity_feasible and self.is_duration_feasible
+        return self.is_time_feasible and self.is_capacity_feasible and self.is_duration_feasible and self.is_preference_feasible
 
     @property
     def wait_time_ratio(self) -> float:
@@ -143,7 +222,8 @@ class RvrpState:
                 total_load_cbm=r.total_load_cbm,
                 is_time_feasible=r.is_time_feasible,
                 is_capacity_feasible=r.is_capacity_feasible,
-                is_duration_feasible=r.is_duration_feasible
+                is_duration_feasible=r.is_duration_feasible,
+                is_preference_feasible=r.is_preference_feasible
             ) for r in self.routes
         ]
         return RvrpState(new_routes, self.unassigned[:])
@@ -155,11 +235,11 @@ class RvrpState:
         """
         operational_cost = sum(r.cost for r in self.routes)
         
-        unassigned_penalty = len(self.unassigned) * 1e9 # phạt cho khách không đc serve
+        #unassigned_penalty = len(self.unassigned) * 1e9 # NGUY CƠ ẢNH HƯỞNG ĐẾN STATE SAU KHI DESTROY, SẼ MESS UP REPAIR
 
-        underutilization_penalty = 0 * self.mean_capacity_utilization  # phạt cho capacity bị dư -> hiện tại cho bằng 0 (trừ khi muốn đổi utilization vào đây)
+        #underutilization_penalty = 0 * self.mean_capacity_utilization  # phạt cho capacity bị dư -> hiện tại cho bằng 0 (trừ khi muốn đổi utilization vào đây)
         
-        return operational_cost + unassigned_penalty + underutilization_penalty
+        return operational_cost #+ unassigned_penalty #+ underutilization_penalty
 
     @property
     def min_capacity_utilization(self) -> float:

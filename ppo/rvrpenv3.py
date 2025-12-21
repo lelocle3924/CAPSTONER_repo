@@ -1,10 +1,9 @@
-# --- START OF FILE rvrpenv.py ---
-
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import os
 
+# Import from single source of truth
 from core.data_structures import ProblemData, PPOState, RvrpState, Route
 from core.real_data_loader import RealDataLoader
 from config import PPOConfig, ALNSConfig
@@ -13,6 +12,10 @@ from alns.alns4ppo import ALNS4PPO
 
 ppo_config = PPOConfig()
 alns_config = ALNSConfig()
+
+#ver 4: tính utilization natively trong RvrpState, đổi tên class thành RVRPEnvironment, thay vì VRPTWEnvironment
+# 4.1: register destroy severity cho các destroy operator
+# 4.2: 
 
 class RVRPEnvironment(gym.Env):
     def __init__(self, 
@@ -48,12 +51,10 @@ class RVRPEnvironment(gym.Env):
         self.iters = 0
         self.stop_counter = 0
         self.stagnation_counter = 0
-        self.last_improvement = 0.0 # [UPDATED] Track improvement history
-        
         self.destroy_usage = np.zeros(self.d_op_num, dtype=np.float32)
         self.repair_usage = np.zeros(self.r_op_num, dtype=np.float32)
         
-        # State Objects
+        # State Objects (RvrpState)
         self.current_solution: RvrpState = None
         self.best_solution: RvrpState = None
         self.ppo_state: PPOState = None
@@ -64,7 +65,6 @@ class RVRPEnvironment(gym.Env):
         self.iters = 0
         self.stop_counter = 0
         self.stagnation_counter = 0
-        self.last_improvement = 0.0
         self.destroy_usage.fill(0)
         self.repair_usage.fill(0)
         
@@ -91,40 +91,21 @@ class RVRPEnvironment(gym.Env):
         self.destroy_usage[d_idx] += 1
         self.repair_usage[r_idx] += 1
         
-        # 1. ALNS Iterate (Core Logic)
-        # accept=0: Greedy (Reject if worse), accept=1: Explore (Accept even if worse)
+        # ALNS Iteration
         self.pre_solution, self.current_solution = self.alns.iterate(
             self.current_solution, self.pre_solution, d_idx, r_idx, accept, 
             data=self.problem_data
         )
 
-        # 2. Calculate Metrics & Reward
-        prev_cost = self.pre_solution.objective()
-        curr_cost = self.current_solution.objective()
-        best_cost = self.best_solution.objective()
+        reward = self._calculate_reward(accept)
         
-        # Improvement relative to previous step (Pos: Better, Neg: Worse)
-        base = prev_cost if prev_cost > 1e-6 else 1.0
-        step_improvement = (prev_cost - curr_cost) / base
-        
-        # [UPDATED] Update History for State
-        self.last_improvement = step_improvement
-
-        # 3. Update Global Best & Stagnation
-        if curr_cost < best_cost:
+        if self.current_solution.objective() < self.best_solution.objective():
             self.best_solution = self.current_solution.copy()
             self.stagnation_counter = 0
-            # Bonus reward for finding new global best
-            reward_best = 2.0 * (best_cost - curr_cost) / best_cost
+            reward += 1.0 
         else:
             self.stagnation_counter += 1
-            reward_best = 0.0
 
-        # 4. Calculate Reward
-        reward = self._calculate_reward(step_improvement, accept, self.stagnation_counter)
-        reward += reward_best
-
-        # 5. Prepare Next State
         self.ppo_state = self._extract_features()
         
         terminated = self._check_done(stop)
@@ -140,63 +121,34 @@ class RVRPEnvironment(gym.Env):
 
         return self.ppo_state.to_array(), reward, terminated, truncated, info
 
-    # def _extract_features(self) -> PPOState:
-    #     sol = self.current_solution
-    #     num_routes = len(sol.routes)
-        
-    #     # Proxy for spatial density
-    #     avg_dist_to_depot = np.mean(self.problem_data.dist_matrix[0, 1:])
-    #     density_proxy = self.problem_data.num_nodes / (avg_dist_to_depot + 1.0)
-
-    #     return PPOState(
-    #         search_progress = self.iters / alns_config.num_iterations,
-    #         stagnation_norm = min(1.0, self.stagnation_counter / 50.0), # Normalize 0-1
-    #         best_cost_norm = self.best_solution.objective() / self.initial_cost,
-    #         current_cost_norm = sol.objective() / self.initial_cost,
-            
-    #         # [UPDATED] Now reflects the outcome of the previous step
-    #         improvement_history = self.last_improvement, 
-            
-    #         demands_mean = np.mean(self.problem_data.demands_kg),
-    #         demands_std = np.std(self.problem_data.demands_kg),
-    #         tw_width_mean = np.mean(self.problem_data.time_windows[:, 1] - self.problem_data.time_windows[:, 0]),
-    #         tw_tightness = 0.0, 
-    #         spatial_density = density_proxy,
-            
-    #         min_cap_utilization = sol.min_capacity_utilization,
-    #         mean_cap_utilization = sol.mean_capacity_utilization,
-    #         max_cap_utilization = sol.max_capacity_utilization,
-    #         max_wait_time_ratio = 0.0, # Placeholder
-
-    #         num_routes_norm = num_routes / self.problem_data.num_nodes, 
-    #         num_unassigned_norm = len(sol.unassigned) / self.problem_data.num_nodes,
-            
-    #         destroy_probs = self.destroy_usage / (np.sum(self.destroy_usage) + 1e-6),
-    #         repair_probs = self.repair_usage / (np.sum(self.repair_usage) + 1e-6)
-    #     )
-
     def _extract_features(self) -> PPOState:
+        """
+        Calculates the 21+ features for the PPO neural network.
+        Logic is now delegated to RvrpState properties.
+        """
+        # 1. Solution Statistics (Delegated)
         sol = self.current_solution
         num_routes = len(sol.routes)
         
-        # [UPDATED] Lấy giá trị thật từ ProblemData và RvrpState
+        # 2. Instance Stats (Proxy)
+        avg_dist_to_depot = np.mean(self.problem_data.dist_matrix[0, 1:])
+        density_proxy = self.problem_data.num_nodes / (avg_dist_to_depot + 1.0)
+
+        # 3. Construct PPOState
         return PPOState(
             search_progress = self.iters / alns_config.num_iterations,
-            stagnation_norm = min(1.0, self.stagnation_counter / 50.0),
+            stagnation_norm = min(1.0, self.stagnation_counter / 100.0),
             best_cost_norm = self.best_solution.objective() / self.initial_cost,
             current_cost_norm = sol.objective() / self.initial_cost,
-            improvement_history = self.last_improvement,
+            improvement_history = 0.0, 
             
             demands_mean = np.mean(self.problem_data.demands_kg),
             demands_std = np.std(self.problem_data.demands_kg),
             tw_width_mean = np.mean(self.problem_data.time_windows[:, 1] - self.problem_data.time_windows[:, 0]),
+            tw_tightness = 0.0, 
+            spatial_density = density_proxy,
             
-            # --- REAL FEATURES HERE ---
-            tw_tightness = self.problem_data.static_tw_tightness,
-            spatial_density = self.problem_data.static_spatial_density,
-            max_wait_time_ratio = sol.max_wait_time_ratio, # Dynamic form solution
-            # --------------------------
-            
+            # [UPDATED] Get directly from RvrpState properties
             min_cap_utilization = sol.min_capacity_utilization,
             mean_cap_utilization = sol.mean_capacity_utilization,
             max_cap_utilization = sol.max_capacity_utilization,
@@ -208,46 +160,61 @@ class RVRPEnvironment(gym.Env):
             repair_probs = self.repair_usage / (np.sum(self.repair_usage) + 1e-6)
         )
 
-    def _calculate_reward(self, improvement, accept_action, stagnation):
+    def _calculate_reward(self, accept_action):
         """
-        Custom Reward Function
+        Reward Function Strategy:
+        1. Primary Goal: Cost Reduction (Total Distance + Fixed Cost)
+        2. Secondary Goal: Compactness (Capacity Utilization)
         """
-        # 1. Cost Improvement (Main Driver)
-        # improvement > 0: Reward (Cost giảm)
-        # improvement < 0: Penalty (Cost tăng)
-        reward_cost = improvement * ppo_config.reward_cost_scale
+        # 1. Primary Component: Cost Improvement
+        prev_cost = self.pre_solution.objective()
+        curr_cost = self.current_solution.objective()
         
-        # 2. Utilization Bonus (Secondary)
+        # Calculate relative improvement
+        # Avoid division by zero
+        base_cost = prev_cost if prev_cost > 1e-6 else 1.0
+        cost_delta_pct = (prev_cost - curr_cost) / base_cost
+        
+        reward_cost = cost_delta_pct * ppo_config.reward_cost_scale
+        
+        # 2. Secondary Component: Utilization Improvement (Bonus)
+        # RvrpState has the property 'mean_capacity_utilization'
         prev_util = self.pre_solution.mean_capacity_utilization
         curr_util = self.current_solution.mean_capacity_utilization
-        reward_util = (curr_util - prev_util) * ppo_config.reward_util_lambda
         
-        # 3. [UPDATED] Smart Exploration Bonus
-        # Nếu đang bế tắc (stagnation cao) mà Agent dám Accept (1) dù kết quả tệ (improvement < 0)
-        # -> Thưởng nhẹ để khuyến khích thoát cực trị địa phương.
-        # Nếu không bế tắc mà Accept bừa bãi -> Không thưởng (vẫn bị phạt bởi reward_cost)
-        reward_explore = 0.0
-        if improvement < 0 and accept_action == 1:
-            if stagnation > 10:
-                reward_explore = 0.05 * (stagnation / 50.0) # Bonus tăng theo độ bế tắc
+        util_delta = curr_util - prev_util
         
-        return reward_cost + reward_util + reward_explore
+        # Apply Lambda coefficient
+        reward_util = util_delta * ppo_config.reward_util_lambda
+        
+        # 3. Total Reward
+        total_reward = reward_cost + reward_util
+        
+        # Optional: Penalty for invalid moves (if needed later)
+        # But ALNS handles feasibility internally, so no penalty needed here usually.
+        
+        return total_reward
+
 
     def _register_operators(self):
-        # Destroy
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.1))
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.25))
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.4))
+        # DESTROY OPTS
+        # 1. Random Removal (3 levels)
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.1)) # Light
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.25)) # Medium
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.4)) # Heavy
+
+        # 2. Worst Removal (2 levels) - Cái này quan trọng để phá cục bộ
         self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=0.1))
         self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=0.3))
-        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=0.1))
-        
-        # Repair
+
+        # 3. Route Removal (Phá vỡ cấu trúc xe)
+        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=0.1)) # Xóa 10% số xe
+
+        # REPAIR OPTS
         self.alns.add_repair_operator(vrp.create_greedy_repair_operator(self.problem_data))
-        self.alns.add_repair_operator(vrp.create_criticality_repair_operator(self.problem_data))
         self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data))
 
     def _check_done(self, done_num):
         if done_num == 1: self.stop_counter += 1
         else: self.stop_counter = 0
-        return self.stop_counter >= self.STOP_THRESHOLD or self.iters >= self.MAX_ITERATIONS
+        return self.stop_counter >= self.STOP_THRESHOLD or self.iters >= MAX_ITERATIONS

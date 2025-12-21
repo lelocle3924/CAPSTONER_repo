@@ -1,0 +1,8 @@
+Các file transport order raw nằm trong folder TransportData
+Các file master data (customer, truck, depot) nằm trong folder MasterData
+
+Bước 0: install requirements.txt
+Bước 1: chạy data_clean.py, chỉnh sửa các file đầu vào, dir đầu ra trong đoạn dưới cùng
+Bước 2: chạy data_split.py, chỉnh sửa các file đầu vào, dir đầu ra trong đoạn dưới cùng
+Bước 3 (optional): chạy distance_matrix.py, chỉnh sửa các file đầu vào, dir đầu ra trong đoạn dưới cùng
+Bước 4: chạy distance_matrix.py, chỉnh sửa các file đầu vào, dir đầu ra trong đoạn dưới cùng

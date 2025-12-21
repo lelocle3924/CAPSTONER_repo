@@ -1,39 +1,41 @@
+# core/real_data_loader.py 
+# ver 3: super time matrix, gọi DistanceMatrixCalculator
+# ver 3.5: có thêm read fleet_csv_path
+
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-from typing import List, Dict
-from data_structures import ProblemData, VehicleType
+from typing import List
+from core.data_structures import ProblemData, VehicleType
+from core.distance_matrix import DistanceMatrixCalculator 
 
 class RealDataLoader:
     def __init__(self):
-        # Định nghĩa Fleet mặc định (dựa trên Case Study)
-        # Em tạm fix cứng ở đây, sau này sẽ load từ file Config hoặc CSV VehicleMaster
-        self.default_fleet = [
-            VehicleType(0, "MC",  100,  0.12, 30, 50,  10, 50),
-            VehicleType(1, "AUV", 800,  2.5,  30, 500, 25, 20),
-            VehicleType(2, "4w",  1500, 5.0,  30, 1000, 40, 15),
-            VehicleType(3, "6w",  3000, 12.0, 25, 2000, 60, 10),
-            VehicleType(4, "10w", 12000, 30.0, 25, 3500, 80, 5),
-            VehicleType(5, "40ft", 28000, 60.0, 20, 5000, 100, 2)
-        ]
-        self.vehicle_map = {v.name: v.type_id for v in self.default_fleet}
+        self.fleet: List[VehicleType] = []
+        self.vehicle_map = {}
 
-    def _parse_time(self, time_str, base_date_str="2023-01-01"):
-        """Chuyển đổi chuỗi giờ (HH:MM) sang phút tính từ 00:00"""
+    def _normalize_id(self, val) -> str:
+        if pd.isna(val): return ""
+        s = str(val).strip()
+        if s.endswith('.0'): s = s[:-2]
+        return s
+
+    def _parse_time(self, time_str):
         if pd.isna(time_str): return 0
         try:
-            # Giả sử format HH:MM
-            t = datetime.strptime(time_str, "%H:%M")
-            return t.hour * 60 + t.minute
-        except:
-            return 0
+            if isinstance(time_str, str):
+                parts = time_str.split(':')
+                return int(parts[0]) * 60 + int(parts[1])
+        except: pass
+        return 0
 
     def _parse_allowed_trucks(self, allowed_str: str) -> List[int]:
-        """Parse chuỗi '{AUV, MC, 4w}' thành list ID [1, 0, 2]"""
-        if pd.isna(allowed_str): return [v.type_id for v in self.default_fleet] # Mặc định cho phép tất cả
+        """
+        Parse allowed trucks string. 
+        Nếu không quy định (NaN), mặc định cho phép tất cả các loại xe trong Fleet.
+        """
+        if pd.isna(allowed_str): return [v.type_id for v in self.fleet]
         
-        # Clean string: bỏ dấu {}, split dấu phẩy
-        clean_str = allowed_str.replace('{', '').replace('}', '').replace(' ', '')
+        clean_str = str(allowed_str).replace('{', '').replace('}', '').replace(' ', '').replace('"', '')
         types = clean_str.split(',')
         
         allowed_ids = []
@@ -41,28 +43,101 @@ class RealDataLoader:
             if t in self.vehicle_map:
                 allowed_ids.append(self.vehicle_map[t])
         
-        # Nếu không map được gì (dữ liệu lỗi), cho phép tất cả để tránh crash
-        return allowed_ids if allowed_ids else [v.type_id for v in self.default_fleet]
+        # Nếu parse ra rỗng (do tên sai hoặc format lạ), fallback về all allowed
+        return allowed_ids if allowed_ids else [v.type_id for v in self.fleet]
 
-    def load_day_data(self, order_csv: str, dist_csv: str, time_csv: str) -> ProblemData:
-        # 1. Load DataFrames
-        df_orders = pd.read_csv(order_csv)
-        df_dist = pd.read_csv(dist_csv, index_col=0)
-        df_time = pd.read_csv(time_csv, index_col=0)
+    def _load_fleet_from_csv(self, truck_csv_path: str):
+        """
+        Đọc TruckMaster.csv và khởi tạo self.fleet
+        """
+        print(f"  > Loading Fleet Config from {truck_csv_path}...")
+        try:
+            df_truck = pd.read_csv(truck_csv_path)
+            self.fleet = []
+            
+            for idx, row in df_truck.iterrows():
+                # Tự động gán type_id dựa trên index dòng
+                v = VehicleType(
+                    type_id=idx,
+                    name=str(row['TruckName']).strip(),
+                    capacity_kg=float(row['CapacityKg']),
+                    capacity_cbm=float(row['CapacityCbm']),
+                    speed_kmh=float(row['AverageSpeedKmH']),
+                    fixed_cost=float(row['FixedCost']),
+                    cost_per_km=float(row['CostPerKm']),
+                    cost_per_hour=float(row['CostPerHour']),
+                    count=50 # Default availability (Infinite/Large number)
+                )
+                self.fleet.append(v)
+            
+            # Update map name -> id để dùng cho việc parse AllowedTrucks
+            self.vehicle_map = {v.name: v.type_id for v in self.fleet}
+            print(f"  > Fleet Loaded: {len(self.fleet)} vehicle types.")
+            
+        except Exception as e:
+            print(f"[CRITICAL] Error loading Truck Master: {e}")
+            raise e
 
-        # 2. Xử lý Depot & Customers
-        # Depot là dòng đầu tiên trong split file
-        depot_row = df_orders.iloc[0]
+    def load_day_data(self, order_csv_path: str, truck_csv_path: str) -> ProblemData:
+        """
+        Load orders, Load Fleet, and generate Matrices.
+        """
+        print(f"--- Loading Data Pipeline ---")
         
-        # Tạo list node_ids chuẩn: [DepotID, Customer1, Customer2...]
-        # Lưu ý: df_dist và df_time headers phải khớp với IDs này
-        node_ids = [str(depot_row['Depot'])] # Index 0
-        customers = df_orders['Customer'].astype(str).tolist()
-        node_ids.extend(customers)
+        # 1. LOAD FLEET FIRST (Để có thông tin speed tính matrix)
+        self._load_fleet_from_csv(truck_csv_path)
         
+        # 2. Load & Aggregate Orders
+        print(f"  > Loading Orders from {order_csv_path}...")
+        df_orders_raw = pd.read_csv(order_csv_path)
+        
+        df_orders_raw['KGM'] = df_orders_raw['KGM'].fillna(0)
+        df_orders_raw['CBM'] = df_orders_raw['CBM'].fillna(0)
+        
+        agg_rules = {
+            'KGM': 'sum', 'CBM': 'sum', 
+            'CusLat': 'first', 'CusLong': 'first',
+            'Beginning1': 'first', 'Ending1': 'first',
+            'DwellTime': 'first', 'AllowedTrucks': 'first',
+            'Depot': 'first', 'DepotLat': 'first', 'DepotLong': 'first'
+        }
+        df_orders = df_orders_raw.groupby('Customer', as_index=False).agg(agg_rules)
+        
+        raw_depot_id = df_orders.iloc[0]['Depot']
+        depot_id = self._normalize_id(raw_depot_id)
+        
+        node_ids = [depot_id] + df_orders['Customer'].map(self._normalize_id).tolist()
         num_nodes = len(node_ids)
 
-        # 3. Khởi tạo mảng dữ liệu
+        # 3. GENERATE MATRICES
+        print("  > Calculating Distance Matrix (OSRM)...")
+        calculator = DistanceMatrixCalculator(order_csv_path)
+        # Chỉ cần lấy distance matrix (meters), speed không quan trọng ở bước này
+        df_dist_raw, _ = calculator.calculate_matrices(avg_speed_kmh=30) 
+        
+        if 'Depot' in df_dist_raw.index and depot_id != 'Depot':
+             df_dist_raw.rename(index={'Depot': depot_id}, columns={'Depot': depot_id}, inplace=True)
+             
+        dist_matrix_meters = df_dist_raw.reindex(index=node_ids, columns=node_ids, fill_value=1e9).to_numpy()
+        np.fill_diagonal(dist_matrix_meters, 0)
+
+        # 4. BUILD SUPER TIME MATRIX (V, N, N)
+        print("  > Building Super Time Matrix for Heterogeneous Fleet...")
+        num_vehicle_types = len(self.fleet)
+        super_time_matrix = np.zeros((num_vehicle_types, num_nodes, num_nodes))
+
+        for v in self.fleet:
+            # Convert km/h -> m/min
+            speed_mpm = v.speed_kmh * 1000.0 / 60.0
+            if speed_mpm <= 0.1:
+                print(f"  Warning: Invalid speed for vehicle {v.name}: {speed_mpm} m/min, using safe speed 0.1 m/min")
+                speed_mpm = 0.1
+            
+            # Time (min) = Distance (m) / Speed (m/min)
+            time_matrix_v = dist_matrix_meters / speed_mpm
+            super_time_matrix[v.type_id] = time_matrix_v
+            
+        # 5. Fill Attributes
         coords = np.zeros((num_nodes, 2))
         demands_kg = np.zeros(num_nodes)
         demands_cbm = np.zeros(num_nodes)
@@ -70,80 +145,34 @@ class RealDataLoader:
         service_times = np.zeros(num_nodes)
         allowed_vehicles = []
 
-        # -- Fill Depot Data (Index 0) --
+        # Depot
+        depot_row = df_orders.iloc[0]
         coords[0] = [depot_row['DepotLat'], depot_row['DepotLong']]
-        demands_kg[0] = 0
-        demands_cbm[0] = 0
-        # Depot time window: Mở cửa 8h sáng -> 5h chiều (hoặc rộng hơn tùy logic)
-        # Tạm lấy theo Opening/Closing của Customer đầu tiên làm chuẩn hoặc fix cứng
-        # Ở đây em fix cứng Depot mở 24/24 hoặc theo ca làm việc (0 -> 1440 phút)
-        time_windows[0] = [0, 1440] 
-        service_times[0] = 0
-        allowed_vehicles.append([v.type_id for v in self.default_fleet]) # Depot cho phép mọi xe
+        time_windows[0] = [0, 24 * 60] 
+        allowed_vehicles.append([v.type_id for v in self.fleet])
 
-        # -- Fill Customer Data (Index 1..N) --
-        base_start_time = 8 * 60 # 8:00 AM làm mốc 0 nếu muốn, hoặc dùng tuyệt đối. 
-        # Để đơn giản, em dùng phút trong ngày (00:00 = 0)
-        
+        # Customers
         for i, row in df_orders.iterrows():
-            idx = i + 1 # Index trong mảng (0 là depot)
-            
+            idx = i + 1
             coords[idx] = [row['CusLat'], row['CusLong']]
-            demands_kg[idx] = row['KGM']
-            demands_cbm[idx] = row['CBM']
+            demands_kg[idx] = float(row['KGM'])
+            demands_cbm[idx] = float(row['CBM'])
             
-            # Time Windows
-            start_min = self._parse_time(row['Beginning1'])
-            end_min = self._parse_time(row['Ending1'])
-            if end_min < start_min: end_min = 1440 # Fix lỗi data nếu có
-            time_windows[idx] = [start_min, end_min]
+            start = self._parse_time(row['Beginning1'])
+            end = self._parse_time(row['Ending1'])
+            if end <= start: end = 18 * 60 
+            time_windows[idx] = [start, end]
             
-            # Service Time (DwellTime đang tính bằng giờ -> convert sang phút)
-            service_times[idx] = row['DwellTime'] * 60 
+            dwell = float(row['DwellTime']) if not pd.isna(row['DwellTime']) else 0.5
+            service_times[idx] = dwell * 60
             
-            # Allowed Trucks
+            # Parse allowed trucks based on the loaded fleet map
             allowed_vehicles.append(self._parse_allowed_trucks(row['AllowedTrucks']))
 
-        # 4. Re-index Distance/Time Matrices theo đúng thứ tự node_ids
-        # Đảm bảo ma trận vuông và đúng thứ tự [Depot, C1, C2...]
-        final_dist = np.zeros((num_nodes, num_nodes))
-        final_time = np.zeros((num_nodes, num_nodes))
-        
-        # Check xem các ID trong order có tồn tại trong ma trận khoảng cách không
-        available_ids_dist = set(df_dist.index.astype(str))
-        
-        # Fallback: Nếu thiếu ID trong matrix, dùng Euclidean (tạm thời)
-        # Nhưng ở đây ta assume Nhóm A đã làm matrix chuẩn theo file order
-        
-        # Dùng numpy indexing hoặc loc của pandas (loc chậm hơn nhưng an toàn cho mapping)
-        # Để tối ưu, ta filter df_dist trước
-        # Cần xử lý kỹ vụ ID là float hay int trong CSV string
-        
-        # Mapping index matrix A -> index array B
-        # (Em sẽ viết code simplified đoạn này, thực tế cần try-catch kỹ)
-        try:
-            # Lấy sub-dataframe đúng thứ tự node_ids
-            # Lưu ý: node_ids trong file csv có thể là '2524' nhưng trong matrix là 2524.0
-            # Cần normalize ID
-            matrix_cols = df_dist.columns.astype(str).str.replace('.0', '', regex=False)
-            df_dist.columns = matrix_cols
-            df_dist.index = df_dist.index.astype(str).str.replace('.0', '', regex=False)
-            
-            df_time.columns = matrix_cols
-            df_time.index = df_dist.index # Assume time index same as dist index
-
-            # Reindex
-            # Fillna bằng giá trị lớn vô cùng nếu không tìm thấy đường
-            final_dist = df_dist.reindex(index=node_ids, columns=node_ids, fill_value=1e9).to_numpy()
-            final_time = df_time.reindex(index=node_ids, columns=node_ids, fill_value=1e9).to_numpy()
-            
-        except Exception as e:
-            print(f"Matrix Mapping Error: {e}. Checking logic...")
-            # Fallback logic sẽ code sau nếu cần thiết
-            
+        print("--- Data Loading Complete ---")
         return ProblemData(
-            dist_matrix=final_dist,
-            time_matrix=final_time,
+            dist_matrix=dist_matrix_meters,
+            super_time_matrix=super_time_matrix,
             node_ids=node_ids,
             coords=coords,
             demands_kg=demands_kg,
@@ -151,5 +180,5 @@ class RealDataLoader:
             time_windows=time_windows,
             service_times=service_times,
             allowed_vehicles=allowed_vehicles,
-            vehicle_types=self.default_fleet
+            vehicle_types=self.fleet
         )
