@@ -31,48 +31,8 @@ class VehicleType:
 # ==========================================
 # PART 2: PROBLEM DATA (Static Context)
 # ==========================================
-# @dataclass
-# class ProblemData:
-#     """
-#     Container for all static data. Read-only during optimization.
-#     """
-#     # --- Matrices ---
-#     dist_matrix: np.ndarray # (N, N) Meters
-#     super_time_matrix: np.ndarray # (num_vehicle_types,N, N) Minutes
-
-#     # --- Node Info (Index 0 = Depot) ---
-#     node_ids: List[str]     # ID Mapping
-#     coords: np.ndarray      # (N, 2) [Lat, Lon]
-#     demands_kg: np.ndarray  # (N,)
-#     demands_cbm: np.ndarray # (N,)
-#     time_windows: np.ndarray # (N, 2) Minutes from start
-#     service_times: np.ndarray # (N,) Minutes
-#     allowed_vehicles: List[List[int]] # Node constraints
-
-#     # --- Fleet Info ---
-#     vehicle_types: List[VehicleType]
-
-#     # --- Global constraint for route max time ---
-#     max_route_duration: float = 6000.0 # minutes = 10 hours
-
-#     # --- Helpers ---
-#     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
-
-#     def __post_init__(self):
-#         for idx, node_id in enumerate(self.node_ids):
-#             self._id_to_index[str(node_id)] = idx
-
-#     @property
-#     def num_nodes(self) -> int:
-#         return len(self.node_ids)
-    
-#     #Helper để lấy thời gian di chuyển chuẩn xác cho từng loại xe
-#     def get_travel_time(self, from_node: int, to_node: int, vehicle_type_id: int) -> float:
-#         return self.super_time_matrix[vehicle_type_id, from_node, to_node]
-
 @dataclass
 class ProblemData:
-    # ... (Các fields giữ nguyên) ...
     """
     Container for all static data. Read-only during optimization.
     """
@@ -91,7 +51,7 @@ class ProblemData:
 
     vehicle_types: List[VehicleType]
 
-    max_route_duration: float = 6000.0 # minutes = 10 hours
+    max_route_duration: float = 6000.0 # minutes = 100 hours
 
     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
 
@@ -143,6 +103,15 @@ class ProblemData:
     @property
     def static_spatial_density(self) -> float:
         return self._static_spatial_density
+
+    @property
+    def num_nodes(self) -> int:
+        """Total number of nodes (including depot)."""
+        return len(self.node_ids)
+
+    def get_travel_time(self, from_node: int, to_node: int, vehicle_type_id: int) -> float:
+        return self.super_time_matrix[vehicle_type_id, from_node, to_node]
+
 
 # ==========================================
 # PART 3: SOLUTION REPRESENTATION (Route & State)
@@ -199,6 +168,7 @@ class Route:
 
     @property
     def wait_time_ratio(self) -> float:
+        if self.total_duration_min < 1e-6: return 0.0
         return self.total_wait_time_min / self.total_duration_min
 
 @dataclass
@@ -254,8 +224,12 @@ class RvrpState:
     @property
     def mean_capacity_utilization(self) -> float:
         if not self.routes: return 0.0
-        # Dùng numpy mean cho chính xác và nhanh
         return float(np.mean([r.capacity_utilization for r in self.routes]))
+    
+    @property
+    def max_wait_time_ratio(self) -> float:
+        if not self.routes: return 0.0
+        return max(r.wait_time_ratio for r in self.routes)
 
 # ==========================================
 # PART 4: PPO AGENT STATE (Observation)

@@ -7,20 +7,14 @@ import folium
 import time
 from math import radians, cos, sin, asin, sqrt
 
+#ver 4
+
 class DistanceMatrixCalculator:
-    def __init__(self, order_csv_path: str, truck_csv_path: str = None):
-        """
-        Args:
-            order_csv_path: Đường dẫn file đơn hàng (để lấy tọa độ Nodes)
-            truck_csv_path: Đường dẫn file xe (để lấy tốc độ tính Time Matrix)
-        """
-        self.order_csv_path = order_csv_path
-        self.truck_csv_path = truck_csv_path
-        
+    def __init__(self, file_path):
+        self.file_path = file_path
         self.osrm_table_url = "http://router.project-osrm.org/table/v1/driving/"
         self.osrm_route_url = "http://router.project-osrm.org/route/v1/driving/"
         
-        # Load nodes ngay khi init
         self.nodes = self._load_and_parse_nodes()
         self._cached_distance_array_meters = None 
         
@@ -30,11 +24,10 @@ class DistanceMatrixCalculator:
 
     def _load_and_parse_nodes(self):
         try:
-            df = pd.read_csv(self.order_csv_path)
+            df = pd.read_csv(self.file_path)
         except Exception as e:
-            raise Exception(f"Input error reading orders: {e}")
+            raise Exception(f"Input error: {e}")
 
-        # Logic parse node giữ nguyên
         depot_info = df.iloc[0]
         depot_node = {
             'ID': 'Depot',
@@ -60,6 +53,7 @@ class DistanceMatrixCalculator:
         return [depot_node] + customer_nodes
 
     def _calculate_haversine_subset(self, src_nodes, dst_nodes):
+        # FALLBACK
         matrix = np.zeros((len(src_nodes), len(dst_nodes)))
         for i, src in enumerate(src_nodes):
             for j, dst in enumerate(dst_nodes):
@@ -69,6 +63,7 @@ class DistanceMatrixCalculator:
                 dlat = lat2 - lat1
                 a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
                 c = 2 * asin(sqrt(a))
+                # ROUTE FACTOR to be equivalent to real distance
                 matrix[i][j] = c * 6371 * 1000 * 1.3 
         return matrix
 
@@ -81,25 +76,29 @@ class DistanceMatrixCalculator:
         
         request_url = f"{self.osrm_table_url}{coords_str}?sources={src_indices}&destinations={dst_indices}&annotations=distance"
         
+        # RETRY
         for attempt in range(max_retries):
             try:
                 time.sleep(self.REQUEST_DELAY)
+                
                 response = requests.get(request_url, timeout=self.TIMEOUT)
+                
                 if response.status_code == 200:
                     data = response.json()
                     return np.array(data['distances'])
-                elif response.status_code == 429:
+                elif response.status_code == 429: # Too Many Requests
                     print(f"    [429] Server busy. Retrying in {2*(attempt+1)}s...")
                     time.sleep(2 * (attempt + 1))
                 else:
                     print(f"    [API Error] Status {response.status_code}. Retrying...")
+            
             except requests.exceptions.RequestException as e:
                 print(f"    [Net Error] {e}. Attempt {attempt+1}/{max_retries}")
                 time.sleep(2 * (attempt + 1))
+        
         return None
 
     def _fetch_full_matrix_batched(self):
-        # ... (Logic fetch OSRM giữ nguyên không đổi) ...
         n = len(self.nodes)
         full_matrix = np.zeros((n, n))
         
@@ -108,14 +107,18 @@ class DistanceMatrixCalculator:
         
         for i in range(0, n, self.BATCH_SIZE):
             src_chunk = self.nodes[i : i + self.BATCH_SIZE]
+            
             for j in range(0, n, self.BATCH_SIZE):
                 dst_chunk = self.nodes[j : j + self.BATCH_SIZE]
+                
                 print(f"    - Processing Chunk: Rows {i}-{i+len(src_chunk)} | Cols {j}-{j+len(dst_chunk)}...", end="\r")
+                
                 chunk_matrix = self._fetch_chunk_with_retry(src_chunk, dst_chunk)
+                
                 if chunk_matrix is not None:
                     full_matrix[i : i + len(src_chunk), j : j + len(dst_chunk)] = chunk_matrix
                 else:
-                    print(f"\n    [CRITICAL] Chunk fail. Filling with Haversine.")
+                    print(f"\n    [CRITICAL] Chunk fail at {i}:{j}. Filling with Haversine fallback.")
                     fallback_matrix = self._calculate_haversine_subset(src_chunk, dst_chunk)
                     full_matrix[i : i + len(src_chunk), j : j + len(dst_chunk)] = fallback_matrix
         
@@ -123,28 +126,11 @@ class DistanceMatrixCalculator:
         full_matrix = np.nan_to_num(full_matrix, nan=1e9)
         return full_matrix
 
-    def _load_fleet_speeds(self):
-        """Helper để đọc file TruckMaster và lấy danh sách tốc độ"""
-        if not self.truck_csv_path or not os.path.exists(self.truck_csv_path):
-            print("  [Warning] Truck CSV path missing. Using default speed 30km/h for all.")
-            return [40.0] # Default fallback
-
-        try:
-            df_truck = pd.read_csv(self.truck_csv_path)
-            # Giả định index của row tương ứng với type_id (giống logic RealDataLoader)
-            speeds = df_truck['AverageSpeedKmH'].astype(float).tolist()
-            return speeds
-        except Exception as e:
-            print(f"  [Error] Reading truck speeds: {e}")
-            return [40.0]
-
-    def calculate_matrices(self):
-        """
-        Returns:
-            dist_matrix_meters (np.ndarray): 2D array [N, N]
-            super_time_matrix (np.ndarray): 3D array [NumVehicles, N, N] (Minutes)
-        """
-        # 1. Get Distance Matrix (Meters)
+    #============================================================
+    # MOST IMPORTANT, TO EXPORT DF_DIST_MATRIX AND DF_TIME_MATRIX
+    #============================================================
+    def calculate_matrices(self, avg_speed_kmh=30):
+        # REUSE IF CACHE EXIST TO AVOID RECALCULATION
         if self._cached_distance_array_meters is None:
             self._cached_distance_array_meters = self._fetch_full_matrix_batched()
         else:
@@ -152,29 +138,17 @@ class DistanceMatrixCalculator:
 
         dist_array = self._cached_distance_array_meters
         
-        # 2. Get Fleet Speeds
-        speeds_kmh = self._load_fleet_speeds()
-        num_vehicle_types = len(speeds_kmh)
-        num_nodes = dist_array.shape[0]
+        # SPEED
+        speed = max(avg_speed_kmh, 1) 
+        time_array = (dist_array / 1000.0) / speed * 60.0
         
-        # 3. Build Super Time Matrix
-        print(f"  > Building Super Time Matrix for {num_vehicle_types} vehicle types...")
-        super_time_matrix = np.zeros((num_vehicle_types, num_nodes, num_nodes))
-
-        for idx, speed_kmh in enumerate(speeds_kmh):
-            # Convert km/h -> m/min
-            speed_mpm = speed_kmh * 1000.0 / 60.0
-            if speed_mpm <= 0.1:
-                speed_mpm = 0.1 # Safety
-            
-            # Time (min) = Distance (m) / Speed (m/min)
-            time_matrix_v = dist_array / speed_mpm
-            super_time_matrix[idx] = time_matrix_v
-            
-        return dist_array, super_time_matrix
+        node_ids = [n['ID'] for n in self.nodes]
+        df_dist = pd.DataFrame(dist_array, index=node_ids, columns=node_ids)
+        df_time = pd.DataFrame(time_array, index=node_ids, columns=node_ids)
+        
+        return df_dist, df_time
 
     def export_demo_map(self, output_file='real_route.html'):
-        # ... (Logic vẽ map giữ nguyên) ...
         if not self.nodes: return
         depot = self.nodes[0]
         m = folium.Map(location=[depot['Lat'], depot['Long']], zoom_start=12, tiles='CartoDB positron')
@@ -186,56 +160,43 @@ class DistanceMatrixCalculator:
                 folium.Marker(loc, popup=f"Depot: {node['ID']}", icon=folium.Icon(color='red', icon='home')).add_to(m)
             else:
                 folium.CircleMarker(loc, radius=3, color='blue', fill=True, fill_opacity=0.7).add_to(m)
+        
+        if len(self.nodes) > 1:
+            demo_points = self.nodes[:] + [self.nodes[0]]
+            coords_str = ";".join([f"{n['Long']},{n['Lat']}" for n in demo_points])
+            url = f"{self.osrm_route_url}{coords_str}?overview=full&geometries=polyline"
+            try:
+                r = requests.get(url, timeout=10)
+                if r.status_code == 200:
+                    decoded = polyline.decode(r.json()['routes'][0]['geometry'])
+                    folium.PolyLine(decoded, color="green", weight=2.5, opacity=0.8).add_to(m)
+            except: pass
+            
         m.fit_bounds(bounds)
         m.save(output_file)
         print(f"  > Map exported: {output_file}")
 
-
 if __name__ == "__main__":
-    # Cập nhật đường dẫn file cho đúng cấu trúc dự án
-    ORDER_FILE = 'inputs/CleanData/Split_TransportOrder_1day.csv'
-    DEPOT = ORDER_FILE[-8:-4]
-    TRUCK_FILE = 'inputs/MasterData/TruckMaster.csv'
-    
-    # Đặt tên folder output
+    INPUT_FILE = 'Split_TransportOrder_1day.csv'
+    DEPOT = INPUT_FILE[-8:-4]
+    # Đặt tên folder output ở đây
     OUTPUT_DIR = "DistTimeMatrixOutput"
     DRAW_MAP = True
+    avg_speed_kmh = 30
     
-    if os.path.exists(ORDER_FILE) and os.path.exists(TRUCK_FILE):
-        print(">>> DISTANCE MATRIX GENERATOR (STANDALONE TEST) <<<")
+    if os.path.exists(INPUT_FILE):
+        print(">>>DISTANCE MATRIX GENERATOR<<<")
         
-        # 1. Khởi tạo với 2 tham số
-        calculator = DistanceMatrixCalculator(ORDER_FILE, TRUCK_FILE)
+        calculator = DistanceMatrixCalculator(INPUT_FILE)
         
-        # 2. Tính toán (Lưu ý: super_time_matrix là mảng 3 chiều [VehType, Node, Node])
-        dist_matrix, super_time_matrix = calculator.calculate_matrices()
-        
-        # 3. Lấy Node IDs để làm nhãn cho DataFrame
-        node_ids = [n['ID'] for n in calculator.nodes]
+        # Bắt đầu tính toán
+        df_dist, df_time = calculator.calculate_matrices(avg_speed_kmh=avg_speed_kmh)
         
         if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
-        
-        # 4. Xuất Distance Matrix
-        df_dist = pd.DataFrame(dist_matrix, index=node_ids, columns=node_ids)
-        df_dist.to_csv(f'{OUTPUT_DIR}/distance_matrix_meters{DEPOT}.csv')
-        print(f"  > Saved Distance Matrix: {df_dist.shape}")
-        
-        # 5. Xuất Time Matrix (Vì là 3D nên ta xuất từng layer ra từng file CSV riêng)
-        num_vehicle_types = super_time_matrix.shape[0]
-        print(f"  > Saving Time Matrices for {num_vehicle_types} vehicle types...")
-        
-        for i in range(num_vehicle_types):
-            time_layer = super_time_matrix[i]
-            df_time = pd.DataFrame(np.squeeze(time_layer), index=node_ids, columns=node_ids)
-            # Lưu file theo index loại xe (Type 0 = xe đầu tiên trong TruckMaster)
-            df_time.to_csv(f'{OUTPUT_DIR}/time_matrix_type_{i}_mins{DEPOT}.csv')
-            
-        # 6. Vẽ Map Demo
+        df_dist.to_csv(f'{OUTPUT_DIR}/distance_matrix_{DEPOT}.csv')
+        df_time.to_csv(f'{OUTPUT_DIR}/time_matrix_truck_{avg_speed_kmh}kmh_{DEPOT}.csv')
         if DRAW_MAP:
-            calculator.export_demo_map(f'{OUTPUT_DIR}/map_visualization{DEPOT}.html')
-            
-        print(">>> Processing complete. <<<")
+            calculator.export_demo_map(f'{OUTPUT_DIR}/map_all_nodes_{DEPOT}.html')
+        print(f"Processing complete. Matrix shape: {df_dist.shape}")
     else:
-        print(f"❌ Critical files missing.")
-        print(f"   Order File exists: {os.path.exists(ORDER_FILE)}")
-        print(f"   Truck File exists: {os.path.exists(TRUCK_FILE)}")
+        print(f"File {INPUT_FILE} not found.")

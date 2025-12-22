@@ -12,4 +12,4 @@ from .repairopt import (
     create_criticality_repair_operator,
     create_regret_repair_operator,
 )
-from .initial import one_for_one
+from .initial import clarke_wright_heterogeneous

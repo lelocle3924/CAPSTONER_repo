@@ -1,4 +1,5 @@
-# --- START OF FILE rvrpenv.py ---
+# --- START OF FILE rvrpenv.py --- ver 5
+# ver 5.1: thêm action maskign - Hùng
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -8,8 +9,9 @@ import os
 from core.data_structures import ProblemData, PPOState, RvrpState, Route
 from core.real_data_loader import RealDataLoader
 from config import PPOConfig, ALNSConfig
-import alns.vrp4ppo as vrp
+import alns as vrp
 from alns.alns4ppo import ALNS4PPO
+from sb3_contrib.common.maskable.utils import get_action_masks
 
 ppo_config = PPOConfig()
 alns_config = ALNSConfig()
@@ -27,8 +29,8 @@ class RVRPEnvironment(gym.Env):
             order_csv_path=order_csv_path,
             truck_csv_path=truck_csv_path
         )
-        self.STOP_THRESHOLD = alns_config.stop_threshold
-        self.MAX_ITERATIONS = alns_config.max_iterations
+        self.STOP_THRESHOLD = ppo_config.stop_threshold
+        self.MAX_ITERATIONS = alns_config.num_iterations
         
         self.is_test_mode = is_test_mode
         self.alns = ALNS4PPO()
@@ -71,7 +73,7 @@ class RVRPEnvironment(gym.Env):
         self.alns.reset_opt()
         self._register_operators()
 
-        self.init_solution = vrp.initial.one_for_one(self.problem_data)
+        self.init_solution = vrp.initial.clarke_wright_heterogeneous(self.problem_data)
         
         self.current_solution = self.init_solution.copy()
         self.pre_solution = self.init_solution.copy()
@@ -139,41 +141,6 @@ class RVRPEnvironment(gym.Env):
             }
 
         return self.ppo_state.to_array(), reward, terminated, truncated, info
-
-    # def _extract_features(self) -> PPOState:
-    #     sol = self.current_solution
-    #     num_routes = len(sol.routes)
-        
-    #     # Proxy for spatial density
-    #     avg_dist_to_depot = np.mean(self.problem_data.dist_matrix[0, 1:])
-    #     density_proxy = self.problem_data.num_nodes / (avg_dist_to_depot + 1.0)
-
-    #     return PPOState(
-    #         search_progress = self.iters / alns_config.num_iterations,
-    #         stagnation_norm = min(1.0, self.stagnation_counter / 50.0), # Normalize 0-1
-    #         best_cost_norm = self.best_solution.objective() / self.initial_cost,
-    #         current_cost_norm = sol.objective() / self.initial_cost,
-            
-    #         # [UPDATED] Now reflects the outcome of the previous step
-    #         improvement_history = self.last_improvement, 
-            
-    #         demands_mean = np.mean(self.problem_data.demands_kg),
-    #         demands_std = np.std(self.problem_data.demands_kg),
-    #         tw_width_mean = np.mean(self.problem_data.time_windows[:, 1] - self.problem_data.time_windows[:, 0]),
-    #         tw_tightness = 0.0, 
-    #         spatial_density = density_proxy,
-            
-    #         min_cap_utilization = sol.min_capacity_utilization,
-    #         mean_cap_utilization = sol.mean_capacity_utilization,
-    #         max_cap_utilization = sol.max_capacity_utilization,
-    #         max_wait_time_ratio = 0.0, # Placeholder
-
-    #         num_routes_norm = num_routes / self.problem_data.num_nodes, 
-    #         num_unassigned_norm = len(sol.unassigned) / self.problem_data.num_nodes,
-            
-    #         destroy_probs = self.destroy_usage / (np.sum(self.destroy_usage) + 1e-6),
-    #         repair_probs = self.repair_usage / (np.sum(self.repair_usage) + 1e-6)
-    #     )
 
     def _extract_features(self) -> PPOState:
         sol = self.current_solution
@@ -251,3 +218,37 @@ class RVRPEnvironment(gym.Env):
         if done_num == 1: self.stop_counter += 1
         else: self.stop_counter = 0
         return self.stop_counter >= self.STOP_THRESHOLD or self.iters >= self.MAX_ITERATIONS
+
+    def valid_action_mask(self) -> np.ndarray:
+        """
+        Tạo mask cho MaskablePPO. Trả về 1 array boolean phẳng (concatenated).
+        True = Valid Action, False = Invalid Action.
+        """
+        # 1. Init masks
+        # Destroy mask (Size = self.d_op_num)
+        d_mask = np.ones(self.d_op_num, dtype=bool)
+        
+        # Repair mask (Size = self.r_op_num)
+        r_mask = np.ones(self.r_op_num, dtype=bool)
+        
+        # Accept mask (Size = 2: Greedy, Explore) - Always Valid
+        acc_mask = np.ones(2, dtype=bool)
+        
+        # Stop mask (Size = 2: Continue, Stop) - Always Valid
+        stop_mask = np.ones(2, dtype=bool)
+
+        # 2. Logic Masking
+        current_routes_count = len(self.current_solution.routes)
+        
+        # Rule: Không thể dùng Route Removal (Index 5) nếu số route < 1
+        # Index 5 được hardcode dựa trên thứ tự đăng ký trong _register_operators
+        # (0: Rand1, 1: Rand2, 2: Rand3, 3: Worst1, 4: Worst2, 5: RouteRemoval)
+        if current_routes_count < 1:
+            if self.d_op_num > 5: # Safety check index
+                d_mask[5] = False 
+        
+        # Rule: Nếu không có unassigned customer, Repair nào cũng chạy được (sẽ return no-op),
+        # nhưng về lý thuyết không cần mask repair.
+        
+        # 3. Concatenate (Quan trọng cho MultiDiscrete của SB3)
+        return np.concatenate([d_mask, r_mask, acc_mask, stop_mask])

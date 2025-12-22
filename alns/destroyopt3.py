@@ -1,4 +1,4 @@
-# file: alns/vrp4ppo/destroyopt.py
+# file: alns/vrp4ppo/destroyopt.py ver 3
 
 import numpy as np
 from typing import List
@@ -35,129 +35,82 @@ def get_destroy_params(num_nodes):
     }
 
 # ============================================================
-# 2. LOGIC UPDATE STATE & DOWNGRADE VEHICLES IF POSSIBLE
+# 2. STATE UPDATE LOGIC (FIX STALE STATE)
 # ============================================================
-
-def _find_cheapest_feasible_vehicle(data: ProblemData, current_route: Route) -> Route:
-    """
-    Helper function: Tìm loại xe rẻ nhất có thể phục vụ route hiện tại.
-    Dùng để Downgrade xe sau khi xóa bớt khách.
-    """
-    # 1. Tính tổng tải trọng hiện tại
-    total_kg = sum(data.demands_kg[n] for n in current_route.node_sequence)
-    total_cbm = sum(data.demands_cbm[n] for n in current_route.node_sequence)
-    
-    # 2. Lấy danh sách xe, sort theo Fixed Cost (hoặc Capacity)
-    sorted_fleet = sorted(data.vehicle_types, key=lambda v: v.fixed_cost)
-    
-    best_vehicle = current_route.vehicle_type
-    found_better = False
-    
-    # Chỉ cần check các xe có capacity >= load hiện tại
-    # Và rẻ hơn xe hiện tại (Logic tối ưu)
-    
-    current_cost = current_route.cost # Cost với xe hiện tại
-    
-    for v in sorted_fleet:
-        # Skip nếu xe này quá yếu
-        if v.capacity_kg < total_kg or v.capacity_cbm < total_cbm:
-            continue
-            
-        # Skip preference check kỹ ở đây để nhanh (giả định xe nhỏ thường luồn lách tốt hơn)
-        # Nhưng để an toàn:
-        pref_fail = False
-        for node in current_route.node_sequence:
-            if v.type_id not in data.allowed_vehicles[node]:
-                pref_fail = True
-                break
-        if pref_fail: continue
-
-        # Nếu xe này là xe hiện tại -> Keep it (trừ khi tìm đc xe khác rẻ hơn ở vòng lặp trước/sau)
-        if v.type_id == current_route.vehicle_type.type_id:
-            break # Đã đến xe hiện tại, các xe sau đắt hơn (do sorted) -> Stop
-            
-        # Check Feasibility (Time/Duration)
-        # Hàm này cần import từ repairopt hoặc viết lại logic simulation nhỏ ở đây
-        # Để tránh circular import, tôi viết logic simulation nhanh ở dưới
-        is_feas, metrics = _quick_sim(data, v, current_route.node_sequence)
-        
-        if is_feas:
-            # Tính cost thử
-            dist_km = metrics['dist'] / 1000.0
-            dur_hr = metrics['duration'] / 60.0
-            new_cost = v.fixed_cost + dist_km * v.cost_per_km + dur_hr * v.cost_per_hour
-            
-            if new_cost < current_cost:
-                # Tìm thấy xe rẻ hơn!
-                current_route.vehicle_type = v
-                # Update metrics theo xe mới
-                current_route.total_dist_meters = metrics['dist']
-                current_route.total_duration_min = metrics['duration']
-                current_route.total_wait_time_min = metrics['wait']
-                current_route.total_load_kg = total_kg
-                current_route.total_load_cbm = total_cbm
-                return current_route # Done
-                
-    return current_route
-
-def _quick_sim(data, vehicle, nodes):
-    # Simulation đơn giản để check Time feasibility khi đổi xe
-    curr_time = data.time_windows[0][0]
-    total_dist = 0
-    total_wait = 0
-    prev = 0
-    v_id = vehicle.type_id
-    
-    for node in nodes:
-        dist = data.dist_matrix[prev, node]
-        t_travel = data.get_travel_time(prev, node, v_id)
-        curr_time += t_travel
-        total_dist += dist
-        
-        start, end = data.time_windows[node]
-        if curr_time > end: return False, None
-        if curr_time < start:
-            total_wait += (start - curr_time)
-            curr_time = start
-        curr_time += data.service_times[node]
-        prev = node
-        
-    # Return depot
-    curr_time += data.get_travel_time(prev, 0, v_id)
-    total_dist += data.dist_matrix[prev, 0]
-    
-    if curr_time > data.time_windows[0][1]: return False, None
-    dur = curr_time - data.time_windows[0][0]
-    if dur > data.max_route_duration: return False, None
-    
-    return True, {'dist': total_dist, 'duration': dur, 'wait': total_wait}
 
 def update_single_route_metrics(route: Route, data: ProblemData):
     """
-    Update metrics VÀ thử Downgrade xe nếu tải trọng giảm.
+    Tính toán lại metrics cho 1 route dựa trên sequence hiện tại.
+    Hàm này thay thế các giá trị cached cũ.
     """
     if not route.node_sequence:
+        # Reset về 0 nếu route rỗng
         route.total_dist_meters = 0
+        route.total_duration_min = 0
+        route.total_wait_time_min = 0
+        route.total_load_kg = 0
+        route.total_load_cbm = 0
         return
 
-    # 1. Update Metrics cơ bản với xe hiện tại (để có Load chính xác)
-    # (Logic simulation cũ...)
-    # ... Tôi gọi lại hàm _quick_sim cho xe hiện tại để update
-    _, metrics = _quick_sim(data, route.vehicle_type, route.node_sequence)
-    if metrics:
-        route.total_dist_meters = metrics['dist']
-        route.total_duration_min = metrics['duration']
-        route.total_wait_time_min = metrics['wait']
-        route.total_load_kg = sum(data.demands_kg[n] for n in route.node_sequence)
-        route.total_load_cbm = sum(data.demands_cbm[n] for n in route.node_sequence)
+    total_dist = 0.0
+    total_load_kg = 0.0
+    total_load_cbm = 0.0
+    current_time = 480 #data.time_windows[0][0] # Depot open
+    total_wait = 0.0
     
-    # 2. [NEW] Try Downgrade Vehicle
-    _find_cheapest_feasible_vehicle(data, route)
+    prev_node = 0 # Start at Depot
+    v_id = route.vehicle_type.type_id
+    
+    # Forward simulation
+    for node in route.node_sequence:
+        # Travel
+        dist = data.dist_matrix[prev_node, node]
+        travel_time = data.get_travel_time(prev_node, node, v_id)
+        
+        total_dist += dist
+        current_time += travel_time
+        
+        # Time Window
+        start_window = data.time_windows[node][0]
+        if current_time < start_window:
+            wait = start_window - current_time
+            total_wait += wait
+            current_time = start_window
+            
+        # Service & Load
+        current_time += data.service_times[node]
+        total_load_kg += data.demands_kg[node]
+        total_load_cbm += data.demands_cbm[node]
+        
+        prev_node = node
+        
+    # Return to Depot
+    total_dist += data.dist_matrix[prev_node, 0]
+    current_time += data.get_travel_time(prev_node, 0, v_id)
+    
+    total_duration = current_time - data.time_windows[0][0]
+    
+    # Update attributes in-place
+    route.total_dist_meters = total_dist
+    route.total_duration_min = total_duration
+    route.total_wait_time_min = total_wait
+    route.total_load_kg = total_load_kg
+    route.total_load_cbm = total_load_cbm
+
 
 def update_destroyed_state(state: RvrpState, data: ProblemData) -> RvrpState:
+    """
+    Hàm quan trọng: Cleanup route rỗng và Update lại metrics cho các route còn lại.
+    Được gọi ở cuối mỗi Destroy Operator.
+    """
+    # 1. Xóa các route rỗng (không còn node nào)
     state.routes = [r for r in state.routes if len(r.node_sequence) > 0]
+    
+    # 2. Update metrics cho các route còn lại
+    # (Vì node bị xóa làm thay đổi khoảng cách và thời gian chờ của các node còn lại)
     for route in state.routes:
         update_single_route_metrics(route, data)
+        
     return state
 
 # ============================================================

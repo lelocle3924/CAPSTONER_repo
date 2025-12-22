@@ -1,3 +1,7 @@
+# core/real_data_loader.py 
+# ver 3: super time matrix, gọi DistanceMatrixCalculator
+# ver 3.5: có thêm read fleet_csv_path
+
 import pandas as pd
 import numpy as np
 from typing import List
@@ -25,6 +29,10 @@ class RealDataLoader:
         return 0
 
     def _parse_allowed_trucks(self, allowed_str: str) -> List[int]:
+        """
+        Parse allowed trucks string. 
+        Nếu không quy định (NaN), mặc định cho phép tất cả các loại xe trong Fleet.
+        """
         if pd.isna(allowed_str): return [v.type_id for v in self.fleet]
         
         clean_str = str(allowed_str).replace('{', '').replace('}', '').replace(' ', '').replace('"', '')
@@ -35,11 +43,12 @@ class RealDataLoader:
             if t in self.vehicle_map:
                 allowed_ids.append(self.vehicle_map[t])
         
+        # Nếu parse ra rỗng (do tên sai hoặc format lạ), fallback về all allowed
         return allowed_ids if allowed_ids else [v.type_id for v in self.fleet]
 
     def _load_fleet_from_csv(self, truck_csv_path: str):
         """
-        Đọc TruckMaster.csv để tạo VehicleType objects (dùng cho ProblemData)
+        Đọc TruckMaster.csv và khởi tạo self.fleet
         """
         print(f"  > Loading Fleet Config from {truck_csv_path}...")
         try:
@@ -47,6 +56,7 @@ class RealDataLoader:
             self.fleet = []
             
             for idx, row in df_truck.iterrows():
+                # Tự động gán type_id dựa trên index dòng
                 v = VehicleType(
                     type_id=idx,
                     name=str(row['TruckName']).strip(),
@@ -56,10 +66,11 @@ class RealDataLoader:
                     fixed_cost=float(row['FixedCost']),
                     cost_per_km=float(row['CostPerKm']),
                     cost_per_hour=float(row['CostPerHour']),
-                    count=50 
+                    count=50 # Default availability (Infinite/Large number)
                 )
                 self.fleet.append(v)
             
+            # Update map name -> id để dùng cho việc parse AllowedTrucks
             self.vehicle_map = {v.name: v.type_id for v in self.fleet}
             print(f"  > Fleet Loaded: {len(self.fleet)} vehicle types.")
             
@@ -69,11 +80,11 @@ class RealDataLoader:
 
     def load_day_data(self, order_csv_path: str, truck_csv_path: str) -> ProblemData:
         """
-        Load orders, Load Fleet, and receive Matrices from DistanceMatrixCalculator.
+        Load orders, Load Fleet, and generate Matrices.
         """
         print(f"--- Loading Data Pipeline ---")
         
-        # 1. LOAD FLEET Objects (để lấy Attributes: cost, weight, volume)
+        # 1. LOAD FLEET FIRST (Để có thông tin speed tính matrix)
         self._load_fleet_from_csv(truck_csv_path)
         
         # 2. Load & Aggregate Orders
@@ -98,18 +109,35 @@ class RealDataLoader:
         node_ids = [depot_id] + df_orders['Customer'].map(self._normalize_id).tolist()
         num_nodes = len(node_ids)
 
-        # 3. GET MATRICES FROM CALCULATOR
-        print("  > Invoking DistanceMatrixCalculator...")
-        # Truyền cả 2 file path vào đây
-        calculator = DistanceMatrixCalculator(order_csv_path, truck_csv_path)
+        # 3. GENERATE MATRICES
+        print("  > Calculating Distance Matrix (OSRM)...")
+        calculator = DistanceMatrixCalculator(order_csv_path)
+        # Chỉ cần lấy distance matrix (meters), speed không quan trọng ở bước này
+        df_dist_raw, _ = calculator.calculate_matrices(avg_speed_kmh=30) 
         
-        # Hàm này giờ trả về numpy array trực tiếp
-        dist_matrix_meters, super_time_matrix = calculator.calculate_matrices() 
-        
-        # Sửa lại diagonal cho chắc chắn
+        if 'Depot' in df_dist_raw.index and depot_id != 'Depot':
+             df_dist_raw.rename(index={'Depot': depot_id}, columns={'Depot': depot_id}, inplace=True)
+             
+        dist_matrix_meters = df_dist_raw.reindex(index=node_ids, columns=node_ids, fill_value=1e9).to_numpy()
         np.fill_diagonal(dist_matrix_meters, 0)
+
+        # 4. BUILD SUPER TIME MATRIX (V, N, N)
+        print("  > Building Super Time Matrix for Heterogeneous Fleet...")
+        num_vehicle_types = len(self.fleet)
+        super_time_matrix = np.zeros((num_vehicle_types, num_nodes, num_nodes))
+
+        for v in self.fleet:
+            # Convert km/h -> m/min
+            speed_mpm = v.speed_kmh * 1000.0 / 60.0
+            if speed_mpm <= 0.1:
+                print(f"  Warning: Invalid speed for vehicle {v.name}: {speed_mpm} m/min, using safe speed 0.1 m/min")
+                speed_mpm = 0.1
             
-        # 4. Fill Node Attributes
+            # Time (min) = Distance (m) / Speed (m/min)
+            time_matrix_v = dist_matrix_meters / speed_mpm
+            super_time_matrix[v.type_id] = time_matrix_v
+            
+        # 5. Fill Attributes
         coords = np.zeros((num_nodes, 2))
         demands_kg = np.zeros(num_nodes)
         demands_cbm = np.zeros(num_nodes)
@@ -138,10 +166,10 @@ class RealDataLoader:
             dwell = float(row['DwellTime']) if not pd.isna(row['DwellTime']) else 0.5
             service_times[idx] = dwell * 60
             
+            # Parse allowed trucks based on the loaded fleet map
             allowed_vehicles.append(self._parse_allowed_trucks(row['AllowedTrucks']))
 
         print("--- Data Loading Complete ---")
-        
         return ProblemData(
             dist_matrix=dist_matrix_meters,
             super_time_matrix=super_time_matrix,

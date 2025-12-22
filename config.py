@@ -58,7 +58,8 @@ class PPOConfig:
     test_seed: int = 369
     test_instances: int = 10 
     stop_threshold: float = 1000 #     SỐ LẦN AGENT RA QUYẾT ĐỊNH STOP TRƯỚC KHI KẾT THÚC EPISODE
-
+    reward_util_lambda = 0.05
+    reward_cost_scale = 4
     # OTHER CONFIG
     num_flag: int = 151 #dimension
     tensorboard_log: str = f"./logs/dim{num_flag}cap{capacity}/log{total_timesteps}/"
