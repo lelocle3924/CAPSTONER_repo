@@ -1,0 +1,287 @@
+TEST SESSION START: 2025-12-23 13:42:02.422385
+
+Order File: inputs/CleanData/Split_TransportOrder_2524.csv
+[INIT] SUMMARY:
+  Total Cost: 17,699.45
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.17%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=25/1000kg    | Stops=10  | Cost=1,295
+        R03: Type=AUV   | Load=12/1000kg    | Stops=8   | Cost=922
+        R04: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=752
+        R05: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R06: Type=AUV   | Load=31/1000kg    | Stops=9   | Cost=1,221
+        R07: Type=AUV   | Load=1/1000kg     | Stops=6   | Cost=841
+        R08: Type=AUV   | Load=5/1000kg     | Stops=17  | Cost=1,366
+        R09: Type=AUV   | Load=17/1000kg    | Stops=11  | Cost=1,141
+        R10: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R11: Type=AUV   | Load=11/1000kg    | Stops=8   | Cost=1,414
+        R12: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R13: Type=AUV   | Load=29/1000kg    | Stops=9   | Cost=1,064
+        R14: Type=AUV   | Load=32/1000kg    | Stops=10  | Cost=846
+        R15: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R16: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R17: Type=MC    | Load=2/150kg      | Stops=11  | Cost=605
+        R18: Type=AUV   | Load=12/1000kg    | Stops=6   | Cost=629
+
+>>> EXECUTE: route_destroy_large -> regret_repair (EXPLORE)
+[STEP 1] SUMMARY:
+  Total Cost: 19,857.91
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=752
+        R03: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R04: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R05: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R06: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R07: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R08: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R09: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R10: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R11: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R12: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R13: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R14: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R15: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R16: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R17: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R18: Type=AUV   | Load=7/1000kg     | Stops=3   | Cost=893
+
+>>> EXECUTE: route_destroy_small -> criticality_repair (GREEDY)
+[STEP 2] SUMMARY:
+  Total Cost: 19,857.91
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=752
+        R03: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R04: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R05: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R06: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R07: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R08: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R09: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R10: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R11: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R12: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R13: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R14: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R15: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R16: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R17: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R18: Type=AUV   | Load=7/1000kg     | Stops=3   | Cost=893
+
+>>> EXECUTE: route_destroy_small -> criticality_repair (GREEDY)
+[STEP 3] SUMMARY:
+  Total Cost: 19,857.91
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=752
+        R03: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R04: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R05: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R06: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R07: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R08: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R09: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R10: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R11: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R12: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R13: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R14: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R15: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R16: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R17: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R18: Type=AUV   | Load=7/1000kg     | Stops=3   | Cost=893
+
+>>> EXECUTE: route_destroy_small -> criticality_repair (GREEDY)
+[STEP 4] SUMMARY:
+  Total Cost: 19,810.05
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R05: Type=AUV   | Load=3/1000kg     | Stops=8   | Cost=1,010
+        R06: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R07: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R10: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R11: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R14: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R15: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=959
+        R18: Type=AUV   | Load=1/1000kg     | Stops=2   | Cost=471
+
+>>> EXECUTE: route_destroy_small -> regret_repair (GREEDY)
+[STEP 5] SUMMARY:
+  Total Cost: 19,810.05
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R05: Type=AUV   | Load=3/1000kg     | Stops=8   | Cost=1,010
+        R06: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R07: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R10: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R11: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R14: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R15: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=959
+        R18: Type=AUV   | Load=1/1000kg     | Stops=2   | Cost=471
+
+>>> EXECUTE: route_destroy_small -> regret_repair (GREEDY)
+[STEP 6] SUMMARY:
+  Total Cost: 19,810.05
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R05: Type=AUV   | Load=3/1000kg     | Stops=8   | Cost=1,010
+        R06: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R07: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R10: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R11: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R14: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R15: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=959
+        R18: Type=AUV   | Load=1/1000kg     | Stops=2   | Cost=471
+
+>>> EXECUTE: route_destroy_small -> regret_repair (GREEDY)
+[STEP 7] SUMMARY:
+  Total Cost: 19,810.05
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.31%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=99/1000kg    | Stops=10  | Cost=1,030
+        R02: Type=AUV   | Load=13/1000kg    | Stops=10  | Cost=902
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,043
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,262
+        R05: Type=AUV   | Load=3/1000kg     | Stops=8   | Cost=1,010
+        R06: Type=AUV   | Load=37/1000kg    | Stops=9   | Cost=1,040
+        R07: Type=AUV   | Load=5/1000kg     | Stops=9   | Cost=982
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=16  | Cost=876
+        R10: Type=AUV   | Load=12/1000kg    | Stops=10  | Cost=1,363
+        R11: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=1,557
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=11/1000kg    | Stops=9   | Cost=1,862
+        R14: Type=AUV   | Load=28/1000kg    | Stops=9   | Cost=1,104
+        R15: Type=AUV   | Load=21/1000kg    | Stops=9   | Cost=1,140
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=959
+        R18: Type=AUV   | Load=1/1000kg     | Stops=2   | Cost=471
+
+>>> EXECUTE: random_destroy_large -> regret_repair (GREEDY)
+[STEP 8] SUMMARY:
+  Total Cost: 19,130.80
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.28%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=1,016
+        R02: Type=AUV   | Load=13/1000kg    | Stops=9   | Cost=898
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,013
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,192
+        R05: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R06: Type=AUV   | Load=40/1000kg    | Stops=9   | Cost=1,044
+        R07: Type=AUV   | Load=10/1000kg    | Stops=9   | Cost=886
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=15  | Cost=838
+        R10: Type=AUV   | Load=9/1000kg     | Stops=12  | Cost=1,359
+        R11: Type=AUV   | Load=15/1000kg    | Stops=8   | Cost=1,416
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=8/1000kg     | Stops=9   | Cost=1,836
+        R14: Type=AUV   | Load=31/1000kg    | Stops=9   | Cost=1,105
+        R15: Type=AUV   | Load=82/1000kg    | Stops=10  | Cost=1,064
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=916
+        R18: Type=AUV   | Load=1/1000kg     | Stops=3   | Cost=499
+
+>>> EXECUTE: random_destroy_large -> regret_repair (GREEDY)
+[STEP 9] SUMMARY:
+  Total Cost: 19,130.80
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.28%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=1,016
+        R02: Type=AUV   | Load=13/1000kg    | Stops=9   | Cost=898
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=1,013
+        R04: Type=AUV   | Load=17/1000kg    | Stops=12  | Cost=1,192
+        R05: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R06: Type=AUV   | Load=40/1000kg    | Stops=9   | Cost=1,044
+        R07: Type=AUV   | Load=10/1000kg    | Stops=9   | Cost=886
+        R08: Type=AUV   | Load=57/1000kg    | Stops=9   | Cost=808
+        R09: Type=MC    | Load=3/150kg      | Stops=15  | Cost=838
+        R10: Type=AUV   | Load=9/1000kg     | Stops=12  | Cost=1,359
+        R11: Type=AUV   | Load=15/1000kg    | Stops=8   | Cost=1,416
+        R12: Type=AUV   | Load=26/1000kg    | Stops=10  | Cost=1,418
+        R13: Type=AUV   | Load=8/1000kg     | Stops=9   | Cost=1,836
+        R14: Type=AUV   | Load=31/1000kg    | Stops=9   | Cost=1,105
+        R15: Type=AUV   | Load=82/1000kg    | Stops=10  | Cost=1,064
+        R16: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=982
+        R17: Type=AUV   | Load=16/1000kg    | Stops=9   | Cost=916
+        R18: Type=AUV   | Load=1/1000kg     | Stops=3   | Cost=499
+
+>>> EXECUTE: random_destroy_large -> regret_repair (GREEDY)
+[STEP 10] SUMMARY:
+  Total Cost: 18,734.17
+  Total Routes: 18
+  Unassigned: 0
+  Mean Util: 4.41%
+  > ROUTE DETAILS:
+        R01: Type=AUV   | Load=33/1000kg    | Stops=10  | Cost=1,020
+        R02: Type=AUV   | Load=31/1000kg    | Stops=10  | Cost=875
+        R03: Type=AUV   | Load=4/1000kg     | Stops=8   | Cost=987
+        R04: Type=AUV   | Load=23/1000kg    | Stops=11  | Cost=1,105
+        R05: Type=AUV   | Load=3/1000kg     | Stops=7   | Cost=842
+        R06: Type=AUV   | Load=33/1000kg    | Stops=9   | Cost=1,086
+        R07: Type=AUV   | Load=10/1000kg    | Stops=9   | Cost=886
+        R08: Type=AUV   | Load=55/1000kg    | Stops=9   | Cost=772
+        R09: Type=MC    | Load=3/150kg      | Stops=16  | Cost=743
+        R10: Type=AUV   | Load=72/1000kg    | Stops=13  | Cost=1,345
+        R11: Type=AUV   | Load=16/1000kg    | Stops=8   | Cost=1,418
+        R12: Type=AUV   | Load=24/1000kg    | Stops=10  | Cost=1,412
+        R13: Type=AUV   | Load=12/1000kg    | Stops=9   | Cost=1,515
+        R14: Type=AUV   | Load=27/1000kg    | Stops=9   | Cost=1,071
+        R15: Type=AUV   | Load=17/1000kg    | Stops=9   | Cost=1,105
+        R16: Type=AUV   | Load=25/1000kg    | Stops=9   | Cost=1,071
+        R17: Type=AUV   | Load=13/1000kg    | Stops=9   | Cost=900
+        R18: Type=AUV   | Load=2/1000kg     | Stops=3   | Cost=580

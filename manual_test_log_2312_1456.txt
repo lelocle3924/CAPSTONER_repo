@@ -1,0 +1,12 @@
+TEST SESSION START: 2025-12-23 14:56:28.103998
+
+Order File: inputs/CleanData/Split_TransportOrder_allabove1_2513.csv
+[INIT] SUMMARY:
+  Total Cost: 4,691.96
+  Total Routes: 3
+  Unassigned: 0
+  Mean Util: 67.23%
+  > ROUTE DETAILS:
+    >>> R01: Type=10w   | Load=8241/15000kg | Stops=14  | Cost=988
+    >>> R02: Type=10w   | Load=13643/15000kg | Stops=18  | Cost=754
+    >>> R03: Type=6w    | Load=3905/7000kg  | Stops=10  | Cost=2,950

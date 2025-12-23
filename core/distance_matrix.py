@@ -6,6 +6,11 @@ import polyline
 import folium
 import time
 from math import radians, cos, sin, asin, sqrt
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+from config import PPOConfig as cfg
 
 class DistanceMatrixCalculator:
     def __init__(self, order_csv_path: str, truck_csv_path: str = None):
@@ -34,7 +39,6 @@ class DistanceMatrixCalculator:
         except Exception as e:
             raise Exception(f"Input error reading orders: {e}")
 
-        # Logic parse node giữ nguyên
         depot_info = df.iloc[0]
         depot_node = {
             'ID': 'Depot',
@@ -174,7 +178,6 @@ class DistanceMatrixCalculator:
         return dist_array, super_time_matrix
 
     def export_demo_map(self, output_file='real_route.html'):
-        # ... (Logic vẽ map giữ nguyên) ...
         if not self.nodes: return
         depot = self.nodes[0]
         m = folium.Map(location=[depot['Lat'], depot['Long']], zoom_start=12, tiles='CartoDB positron')
@@ -193,12 +196,12 @@ class DistanceMatrixCalculator:
 
 if __name__ == "__main__":
     # Cập nhật đường dẫn file cho đúng cấu trúc dự án
-    ORDER_FILE = 'inputs/CleanData/Split_TransportOrder_1day.csv'
+    ORDER_FILE = cfg.ORDER_PATH
     DEPOT = ORDER_FILE[-8:-4]
-    TRUCK_FILE = 'inputs/MasterData/TruckMaster.csv'
+    TRUCK_FILE = cfg.TRUCK_PATH
     
     # Đặt tên folder output
-    OUTPUT_DIR = "DistTimeMatrixOutput"
+    OUTPUT_DIR = cfg.DISTANCE_TIME_PATH
     DRAW_MAP = True
     
     if os.path.exists(ORDER_FILE) and os.path.exists(TRUCK_FILE):

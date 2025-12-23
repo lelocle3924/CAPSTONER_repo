@@ -180,7 +180,7 @@ if __name__ == "__main__":
     INPUT_FILE = 'Split_TransportOrder_1day.csv'
     DEPOT = INPUT_FILE[-8:-4]
     # Đặt tên folder output ở đây
-    OUTPUT_DIR = "DistTimeMatrixOutput"
+    OUTPUT_DIR = "DistTimeMatrix"
     DRAW_MAP = True
     avg_speed_kmh = 30
     

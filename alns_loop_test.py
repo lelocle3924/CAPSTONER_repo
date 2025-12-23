@@ -10,7 +10,7 @@ from ppo.rvrpenv import RVRPEnvironment
 from core.data_structures import RvrpState, Route, ProblemData
 
 # --- CONFIG ---
-ORDER_PATH = "inputs/CleanData/Split_TransportOrder_2513.csv"
+ORDER_PATH = "inputs/CleanData/Split_TransportOrder_allabove1_2524.csv"
 TRUCK_PATH = "inputs/MasterData/TruckMaster.csv"
 timestamp = datetime.now().strftime("%d%m_%H%M")
 ENABLE_REALTIME_PLOT = True 
@@ -44,14 +44,16 @@ class GameVisualizer:
     def update_plot(self, state: RvrpState, data: ProblemData, step_info: str, step_idx: int):
         self.ax.clear()
         
+        # [FIX]: Longitude = X, Latitude = Y
+        
         # 1. Vẽ Depot
-        depot = data.coords[0]
-        self.ax.scatter(depot[0], depot[1], c='red', marker='s', s=100, zorder=10, label='Depot')
+        depot = data.coords[0] # [Lat, Long]
+        self.ax.scatter(depot[1], depot[0], c='red', marker='s', s=100, zorder=10, label='Depot')
         
         # 2. Vẽ Unassigned Customers
         if state.unassigned:
             un_coords = data.coords[state.unassigned]
-            self.ax.scatter(un_coords[:, 0], un_coords[:, 1], c='black', marker='x', s=50, label='Unassigned')
+            self.ax.scatter(un_coords[:, 1], un_coords[:, 0], c='black', marker='x', s=50, label='Unassigned')
 
         # 3. Vẽ Routes
         legend_patches = []
@@ -65,10 +67,10 @@ class GameVisualizer:
             path_idxs = [0] + route.node_sequence + [0]
             path_coords = data.coords[path_idxs]
             
-            # Vẽ đường
-            self.ax.plot(path_coords[:, 0], path_coords[:, 1], c=color, linewidth=1.5, alpha=0.7)
+            # Vẽ đường (Long = col 1, Lat = col 0)
+            self.ax.plot(path_coords[:, 1], path_coords[:, 0], c=color, linewidth=1.5, alpha=0.7)
             # Vẽ điểm khách hàng
-            self.ax.scatter(path_coords[1:-1, 0], path_coords[1:-1, 1], c=color, s=20)
+            self.ax.scatter(path_coords[1:-1, 1], path_coords[1:-1, 0], c=color, s=20)
             
             if v_name not in seen_types:
                 seen_types.add(v_name)
@@ -77,8 +79,8 @@ class GameVisualizer:
         # 4. Trang trí
         self.ax.set_title(f"STEP {step_idx}: {step_info}\nCost: {state.objective():,.0f} | Routes: {len(state.routes)} | Unassigned: {len(state.unassigned)}")
         self.ax.legend(handles=legend_patches, loc='upper right')
-        self.ax.set_xlabel("Latitude")
-        self.ax.set_ylabel("Longitude")
+        self.ax.set_xlabel("Longitude")
+        self.ax.set_ylabel("Latitude")
         self.ax.grid(True, linestyle='--', alpha=0.3)
         
         # 5. Render & Save
@@ -141,7 +143,7 @@ def main():
 
     f_log = open(LOG_FILE, "w", encoding="utf-8")
     log_to_file(f_log, f"TEST SESSION START: {datetime.now()}\n")
-
+    log_to_file(f_log, f"Order File: {ORDER_PATH}")
     # Init Env
     env = RVRPEnvironment(ORDER_PATH, TRUCK_PATH, is_test_mode=True)
     
@@ -185,12 +187,12 @@ def main():
             d_idx, r_idx, acc, stop = parts
             
             # Validate
-            if d_idx < 0 or d_idx >= env.d_op_num:
-                print(f"❌ Destroy index must be 0-{env.d_op_num-1}")
-                continue
-            if r_idx < 0 or r_idx >= env.r_op_num:
-                print(f"❌ Repair index must be 0-{env.r_op_num-1}")
-                continue
+            # if d_idx < 0 or d_idx >= env.d_op_num:
+            #     print(f"❌ Destroy index must be 0-{env.d_op_num-1}")
+            #     continue
+            # if r_idx < 0 or r_idx >= env.r_op_num:
+            #     print(f"❌ Repair index must be 0-{env.r_op_num-1}")
+            #     continue
 
             action = np.array([d_idx, r_idx, acc, stop], dtype=np.int32)
             

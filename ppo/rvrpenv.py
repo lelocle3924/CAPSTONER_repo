@@ -8,13 +8,13 @@ import os
 
 from core.data_structures import ProblemData, PPOState, RvrpState, Route
 from core.real_data_loader import RealDataLoader
-from config import PPOConfig, ALNSConfig
+from config import PPOConfig, ALNSConfig, PathConfig
 import alns as vrp
 from alns.alns4ppo import ALNS4PPO
 from sb3_contrib.common.maskable.utils import get_action_masks
 
-ppo_config = PPOConfig()
-alns_config = ALNSConfig()
+ppo_cfg = PPOConfig()
+alns_cfg = ALNSConfig()
 
 class RVRPEnvironment(gym.Env):
     def __init__(self, 
@@ -29,15 +29,17 @@ class RVRPEnvironment(gym.Env):
             order_csv_path=order_csv_path,
             truck_csv_path=truck_csv_path
         )
-        self.STOP_THRESHOLD = ppo_config.stop_threshold
-        self.MAX_ITERATIONS = alns_config.num_iterations
+        self.STOP_THRESHOLD = ppo_cfg.stop_threshold
+        self.MAX_ITERATIONS = alns_cfg.num_iterations
         
         self.is_test_mode = is_test_mode
         self.alns = ALNS4PPO()
         
         # 2. Spaces
-        self.d_op_num = alns_config.num_destroy
-        self.r_op_num = alns_config.num_repair
+        self.alns.reset_opt()
+        self._register_operators()
+        self.d_op_num = len(self.alns.destroy_operators)
+        self.r_op_num = len(self.alns.repair_operators)
         
         self.action_space = spaces.MultiDiscrete([self.d_op_num, self.r_op_num, 2, 2])
         
@@ -50,7 +52,7 @@ class RVRPEnvironment(gym.Env):
         self.iters = 0
         self.stop_counter = 0
         self.stagnation_counter = 0
-        self.last_improvement = 0.0 # [UPDATED] Track improvement history
+        self.last_improvement = 0.0
         
         self.destroy_usage = np.zeros(self.d_op_num, dtype=np.float32)
         self.repair_usage = np.zeros(self.r_op_num, dtype=np.float32)
@@ -70,16 +72,12 @@ class RVRPEnvironment(gym.Env):
         self.destroy_usage.fill(0)
         self.repair_usage.fill(0)
         
-        self.alns.reset_opt()
-        self._register_operators()
-
         self.init_solution = vrp.initial.clarke_wright_heterogeneous(self.problem_data)
         
         self.current_solution = self.init_solution.copy()
         self.pre_solution = self.init_solution.copy()
         self.best_solution = self.init_solution.copy()
         
-        # Init cost for normalization
         self.initial_cost = self.init_solution.objective()
         if self.initial_cost == 0: self.initial_cost = 1.0
 
@@ -109,7 +107,6 @@ class RVRPEnvironment(gym.Env):
         base = prev_cost if prev_cost > 1e-6 else 1.0
         step_improvement = (prev_cost - curr_cost) / base
         
-        # [UPDATED] Update History for State
         self.last_improvement = step_improvement
 
         # 3. Update Global Best & Stagnation
@@ -182,12 +179,12 @@ class RVRPEnvironment(gym.Env):
         # 1. Cost Improvement (Main Driver)
         # improvement > 0: Reward (Cost giảm)
         # improvement < 0: Penalty (Cost tăng)
-        reward_cost = improvement * ppo_config.reward_cost_scale
+        reward_cost = improvement * ppo_cfg.reward_cost_scale
         
         # 2. Utilization Bonus (Secondary)
         prev_util = self.pre_solution.mean_capacity_utilization
         curr_util = self.current_solution.mean_capacity_utilization
-        reward_util = (curr_util - prev_util) * ppo_config.reward_util_lambda
+        reward_util = (curr_util - prev_util) * ppo_cfg.reward_util_lambda
         
         # 3. [UPDATED] Smart Exploration Bonus
         # Nếu đang bế tắc (stagnation cao) mà Agent dám Accept (1) dù kết quả tệ (improvement < 0)
@@ -201,18 +198,53 @@ class RVRPEnvironment(gym.Env):
         return reward_cost + reward_util + reward_explore
 
     def _register_operators(self):
-        # Destroy
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.1))
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.25))
-        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=0.4))
-        self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=0.1))
-        self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=0.3))
-        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=0.1))
+        r_small = 0.1
+        r_medium = 0.3
+        r_large = 0.5
         
-        # Repair
-        self.alns.add_repair_operator(vrp.create_greedy_repair_operator(self.problem_data))
-        self.alns.add_repair_operator(vrp.create_criticality_repair_operator(self.problem_data))
-        self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data))
+        # --- 1. RANDOM REMOVAL (Basic Diversification) ---
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=r_small), name="random_small")
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=r_medium), name="random_medium")
+        self.alns.add_destroy_operator(vrp.create_random_customer_removal_operator(self.problem_data, ratio=r_large), name="random_large")
+
+        # --- 2. WORST REMOVAL (Cost Reduction Focus) ---
+        self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=r_small), name="worst_small")
+        self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=r_medium), name="worst_medium")
+        self.alns.add_destroy_operator(vrp.create_worst_removal_operator(self.problem_data, ratio=r_large), name="worst_large")
+
+        # --- 3. STRING REMOVAL (Spatial/Sequence Focus) ---
+        self.alns.add_destroy_operator(vrp.create_string_removal_operator(self.problem_data, ratio=r_small), name="string_small")
+        self.alns.add_destroy_operator(vrp.create_string_removal_operator(self.problem_data, ratio=r_medium), name="string_medium")
+        self.alns.add_destroy_operator(vrp.create_string_removal_operator(self.problem_data, ratio=r_large), name="string_large")
+
+        # --- 4. RELATED REMOVAL (Shaw - Similarity Focus) ---
+        self.alns.add_destroy_operator(vrp.create_related_removal_operator(self.problem_data, ratio=r_small), name="related_small")
+        self.alns.add_destroy_operator(vrp.create_related_removal_operator(self.problem_data, ratio=r_medium), name="related_medium")
+        self.alns.add_destroy_operator(vrp.create_related_removal_operator(self.problem_data, ratio=r_large), name="related_large")
+
+        # --- 5. ROUTE REMOVAL (Structure Focus - High Impact) ---
+        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=r_small), name="route_small")
+        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=r_medium), name="route_medium")
+        self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=r_large), name="route_large")
+
+        # --- 6. LOW UTILIZATION ROUTE REMOVAL (Optimization Focus) ---
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_small), name="low_util_small")
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_medium), name="low_util_medium")
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_large), name="low_util_large")
+
+        # --- 7. SEQUENCE REMOVAL (Sub-tour Focus) ---
+        self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_small), name="sequence_small")
+        self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_medium), name="sequence_medium")
+        self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_large), name="sequence_large")
+
+        # --- 8. ELIMINATE SMALL ROUTES (Cleaner) ---
+        self.alns.add_destroy_operator(vrp.create_eliminate_small_route_operator(self.problem_data, min_stops=3), name="eliminate_toads")
+        
+        # --- REPAIR OPERATORS ---
+        self.alns.add_repair_operator(vrp.create_greedy_repair_operator(self.problem_data), name="greedy_repair")
+        self.alns.add_repair_operator(vrp.create_criticality_repair_operator(self.problem_data), name="criticality_repair")
+        self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data), name="regret_repair")
+
 
     def _check_done(self, done_num):
         if done_num == 1: self.stop_counter += 1

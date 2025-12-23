@@ -51,7 +51,7 @@ class ProblemData:
 
     vehicle_types: List[VehicleType]
 
-    max_route_duration: float = 6000.0 # minutes = 100 hours
+    max_route_duration: float = 1440.0 # minutes = 24 hours
 
     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
 
@@ -204,12 +204,17 @@ class RvrpState:
         Route Cost implicitly includes Fixed + Variable costs via Route.cost property.
         """
         operational_cost = sum(r.cost for r in self.routes)
+        util_penalty = 0
+        for r in self.routes:
+            if r.capacity_utilization < 0.5:
+                # Phạt càng nặng nếu xe càng to mà chở càng ít
+                util_penalty += (0.5 - r.capacity_utilization) * r.vehicle_type.fixed_cost * 5.0
         
         #unassigned_penalty = len(self.unassigned) * 1e9 # NGUY CƠ ẢNH HƯỞNG ĐẾN STATE SAU KHI DESTROY, SẼ MESS UP REPAIR
 
         #underutilization_penalty = 0 * self.mean_capacity_utilization  # phạt cho capacity bị dư -> hiện tại cho bằng 0 (trừ khi muốn đổi utilization vào đây)
         
-        return operational_cost #+ unassigned_penalty #+ underutilization_penalty
+        return operational_cost + util_penalty
 
     @property
     def min_capacity_utilization(self) -> float:

@@ -1,9 +1,13 @@
+# --- START OF FILE core/real_data_loader.py ---
+# ver 6: FIXED CACHE LOADING (String vs Int mismatch)
+
 import pandas as pd
 import numpy as np
+import os
 from typing import List
 from core.data_structures import ProblemData, VehicleType
-from core.distance_matrix import DistanceMatrixCalculator 
-
+from core.distance_matrix import DistanceMatrixCalculator
+from config import PathConfig
 class RealDataLoader:
     def __init__(self):
         self.fleet: List[VehicleType] = []
@@ -38,14 +42,12 @@ class RealDataLoader:
         return allowed_ids if allowed_ids else [v.type_id for v in self.fleet]
 
     def _load_fleet_from_csv(self, truck_csv_path: str):
-        """
-        Đọc TruckMaster.csv để tạo VehicleType objects (dùng cho ProblemData)
-        """
         print(f"  > Loading Fleet Config from {truck_csv_path}...")
         try:
             df_truck = pd.read_csv(truck_csv_path)
-            self.fleet = []
+            df_truck.columns = df_truck.columns.str.strip()
             
+            self.fleet = []
             for idx, row in df_truck.iterrows():
                 v = VehicleType(
                     type_id=idx,
@@ -61,25 +63,19 @@ class RealDataLoader:
                 self.fleet.append(v)
             
             self.vehicle_map = {v.name: v.type_id for v in self.fleet}
-            print(f"  > Fleet Loaded: {len(self.fleet)} vehicle types.")
             
         except Exception as e:
             print(f"[CRITICAL] Error loading Truck Master: {e}")
             raise e
 
     def load_day_data(self, order_csv_path: str, truck_csv_path: str) -> ProblemData:
-        """
-        Load orders, Load Fleet, and receive Matrices from DistanceMatrixCalculator.
-        """
         print(f"--- Loading Data Pipeline ---")
         
-        # 1. LOAD FLEET Objects (để lấy Attributes: cost, weight, volume)
+        # 1. LOAD FLEET
         self._load_fleet_from_csv(truck_csv_path)
         
-        # 2. Load & Aggregate Orders
-        print(f"  > Loading Orders from {order_csv_path}...")
+        # 2. LOAD & AGGREGATE ORDERS
         df_orders_raw = pd.read_csv(order_csv_path)
-        
         df_orders_raw['KGM'] = df_orders_raw['KGM'].fillna(0)
         df_orders_raw['CBM'] = df_orders_raw['CBM'].fillna(0)
         
@@ -93,23 +89,87 @@ class RealDataLoader:
         df_orders = df_orders_raw.groupby('Customer', as_index=False).agg(agg_rules)
         
         raw_depot_id = df_orders.iloc[0]['Depot']
-        depot_id = self._normalize_id(raw_depot_id)
+        depot_id_from_data = self._normalize_id(raw_depot_id)
         
-        node_ids = [depot_id] + df_orders['Customer'].map(self._normalize_id).tolist()
+        filename = os.path.basename(order_csv_path)
+        try:
+            depot_id_from_file = filename.replace('Split_TransportOrder_', '').replace('.csv', '')
+        except:
+            depot_id_from_file = depot_id_from_data
+
+        depot_id = depot_id_from_file 
+        
+        # NOTE: node_ids here are STRINGS
+        node_ids = [depot_id_from_data] + df_orders['Customer'].map(self._normalize_id).tolist()
         num_nodes = len(node_ids)
 
-        # 3. GET MATRICES FROM CALCULATOR
-        print("  > Invoking DistanceMatrixCalculator...")
-        # Truyền cả 2 file path vào đây
-        calculator = DistanceMatrixCalculator(order_csv_path, truck_csv_path)
+        # 3. GET DISTANCE MATRIX (CACHE vs CALCULATE)
+        dist_matrix_meters = None
         
-        # Hàm này giờ trả về numpy array trực tiếp
-        dist_matrix_meters, super_time_matrix = calculator.calculate_matrices() 
+        cache_dir = PathConfig.DISTANCE_TIME_PATH
+        cache_file_name = f"distance_matrix_meters{depot_id}.csv"
+        cache_path = os.path.join(cache_dir, cache_file_name)
         
-        # Sửa lại diagonal cho chắc chắn
-        np.fill_diagonal(dist_matrix_meters, 0)
+        # --- CACHE CHECK ---
+        if os.path.exists(cache_path):
+            print(f"  > [CACHE HIT] Found existing matrix: {cache_path}")
+            try:
+                # Load CSV (Pandas might infer Int64 for index if IDs look like numbers)
+                df_cache = pd.read_csv(cache_path, index_col=0)
+                
+                # [CRITICAL FIX] Force Index and Columns to String to match node_ids
+                df_cache.index = df_cache.index.astype(str)
+                df_cache.columns = df_cache.columns.astype(str)
+                
+                # Reindex
+                df_aligned = df_cache.reindex(index=node_ids, columns=node_ids, fill_value=1e9)
+                
+                # Fill Diagonal = 0
+                np.fill_diagonal(df_aligned.values, 0)
+                
+                dist_matrix_meters = df_aligned.to_numpy()
+                
+                # Safety Check: Nếu quá 50% là vô cực -> Có thể mismatch -> Force Recalculate
+                if np.mean(dist_matrix_meters >= 1e9) > 0.5:
+                    print("    [!] Warning: Cache seems mismatched (too many Infs). Forcing OSRM.")
+                    dist_matrix_meters = None
+                else:
+                    print(f"    -> Loaded Matrix Shape: {dist_matrix_meters.shape}")
+                
+            except Exception as e:
+                print(f"    [!] Error reading cache: {e}. Fallback to OSRM.")
+                dist_matrix_meters = None
+        else:
+            print(f"  > [CACHE MISS] File {cache_file_name} not found.")
+
+        # --- OSRM FALLBACK ---
+        if dist_matrix_meters is None:
+            print("  > Invoking OSRM Calculation...")
+            calculator = DistanceMatrixCalculator(order_csv_path, truck_csv_path)
             
-        # 4. Fill Node Attributes
+            # Tính toán
+            dist_matrix_meters, _ = calculator.calculate_matrices()
+            
+            # Save to Cache
+            if not os.path.exists(cache_dir):
+                os.makedirs(cache_dir)
+            
+            # Khi save, đảm bảo index là node_ids hiện tại để khớp cho lần sau
+            df_save = pd.DataFrame(dist_matrix_meters, index=node_ids, columns=node_ids)
+            print(f"  > Saving new matrix to cache: {cache_path}")
+            df_save.to_csv(cache_path)
+
+        # 4. BUILD SUPER TIME MATRIX
+        num_vehicle_types = len(self.fleet)
+        super_time_matrix = np.zeros((num_vehicle_types, num_nodes, num_nodes))
+
+        for v in self.fleet:
+            speed_mpm = v.speed_kmh * 1000.0 / 60.0 
+            safe_speed = max(0.1, speed_mpm)
+            time_matrix_v = dist_matrix_meters / safe_speed
+            super_time_matrix[v.type_id] = time_matrix_v
+            
+        # 5. Fill Node Attributes
         coords = np.zeros((num_nodes, 2))
         demands_kg = np.zeros(num_nodes)
         demands_cbm = np.zeros(num_nodes)
@@ -139,8 +199,6 @@ class RealDataLoader:
             service_times[idx] = dwell * 60
             
             allowed_vehicles.append(self._parse_allowed_trucks(row['AllowedTrucks']))
-
-        print("--- Data Loading Complete ---")
         
         return ProblemData(
             dist_matrix=dist_matrix_meters,

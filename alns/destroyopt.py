@@ -1,4 +1,6 @@
 # file: alns/vrp4ppo/destroyopt.py
+# ver 4
+# ver 4.1: thêm eliminate small routes
 
 import numpy as np
 from typing import List
@@ -475,3 +477,35 @@ def create_sequence_removal_operator(data: ProblemData, ratio: float = None):
         return _cleanup_empty_routes(destroyed)
 
     return sequence_removal
+
+def create_eliminate_small_route_operator(data: ProblemData, min_stops: int = 2):
+    """
+    Operator chuyên dụng để dọn dẹp các route 'vụn vặt'.
+    Nếu một route chỉ phục vụ <= min_stops khách hàng, nó sẽ bị hủy.
+    Khách hàng trong route đó bị đẩy ra unassigned để các route lớn hơn 'gom' lấy.
+    """
+    def eliminate_small_routes(state: RvrpState, rng, data: ProblemData):
+        destroyed = state.copy()
+        
+        # Nếu không còn route nào thì return
+        if not destroyed.routes:
+            return destroyed
+
+        # Tìm các route quá ngắn
+        # Duyệt ngược để delete an toàn
+        indices_to_remove = []
+        for i in range(len(destroyed.routes) - 1, -1, -1):
+            route = destroyed.routes[i]
+            # Route.node_sequence chứa các khách hàng (không tính depot)
+            if len(route.node_sequence) <= min_stops:
+                indices_to_remove.append(i)
+        
+        # Thực hiện xóa
+        for idx in indices_to_remove:
+            removed_route = destroyed.routes.pop(idx)
+            destroyed.unassigned.extend(removed_route.node_sequence)
+            
+        # Update lại state (metrics, pointers...)
+        return update_destroyed_state(destroyed, data)
+
+    return eliminate_small_routes
