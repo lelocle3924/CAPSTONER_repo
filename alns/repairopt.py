@@ -271,6 +271,7 @@ def create_criticality_repair_operator(data: ProblemData):
 
 
 def create_regret_repair_operator(data: ProblemData, k: int = 2):
+
     """
     Regret Repair: Tính nuối tiếc nếu không chọn lựa chọn tốt nhất.
     Logic UPGRADE VEHICLE đã được tích hợp.
@@ -367,3 +368,246 @@ def create_regret_repair_operator(data: ProblemData, k: int = 2):
 
         return state
     return regret_repair
+
+def create_grasp_repair_operator(data: ProblemData, rcl_size: int = 3):
+    """
+    GRASP (Greedy Randomized Adaptive Search Procedure) Repair.
+    Thay vì chọn nước đi tốt nhất (Best), ta chọn ngẫu nhiên trong Top 'rcl_size' nước đi tốt nhất.
+    Giúp tăng tính đa dạng (Diversification).
+    """
+    def grasp_repair(state: RvrpState, rng, data: ProblemData):
+        rng.shuffle(state.unassigned)
+        
+        while state.unassigned:
+            # List chứa tất cả các nước đi khả thi cho TẤT CẢ các unassigned customers
+            # Format: (cost_increase, customer, r_idx, insert_pos, metrics, new_vehicle)
+            all_moves = []
+            
+            # Lưu ý: Với bài toán lớn, duyệt hết unassigned sẽ chậm. 
+            # Có thể tối ưu bằng cách chỉ xét top N unassigned customers, nhưng ở đây ta làm chuẩn.
+            for customer in state.unassigned:
+                
+                # 1. Check Existing Routes
+                for r_idx, route in enumerate(state.routes):
+                    prev_cost = route.cost
+                    for i in range(len(route.node_sequence) + 1):
+                        cost, metrics, veh = calculate_insertion_cost(data, route, customer, i)
+                        if metrics:
+                            diff = cost - prev_cost
+                            all_moves.append((diff, customer, r_idx, i, metrics, veh))
+                            
+                # 2. Check New Route
+                new_route = _try_create_new_route(data, customer)
+                if new_route:
+                    # New route metrics
+                    m = {
+                        "total_dist_meters": new_route.total_dist_meters,
+                        "total_duration_min": new_route.total_duration_min,
+                        "total_wait_time_min": new_route.total_wait_time_min,
+                        "total_load_kg": new_route.total_load_kg,
+                        "total_load_cbm": new_route.total_load_cbm
+                    }
+                    all_moves.append((new_route.cost, customer, -1, 0, m, new_route.vehicle_type))
+
+            if not all_moves:
+                break # Không còn nước đi nào khả thi
+            
+            # Sort các nước đi theo chi phí tăng dần
+            all_moves.sort(key=lambda x: x[0])
+            
+            # Chọn ngẫu nhiên trong top RCL
+            top_n = min(len(all_moves), rcl_size)
+            selected_idx = rng.integers(0, top_n)
+            winner = all_moves[selected_idx]
+            
+            # Apply
+            _, cust, r_idx, pos, m, veh = winner
+            state.unassigned.remove(cust)
+            
+            if r_idx != -1:
+                target = state.routes[r_idx]
+                target.node_sequence.insert(pos, cust)
+                target.total_dist_meters = m["total_dist_meters"]
+                target.total_duration_min = m["total_duration_min"]
+                target.total_wait_time_min = m["total_wait_time_min"]
+                target.total_load_kg = m["total_load_kg"]
+                target.total_load_cbm = m["total_load_cbm"]
+                if target.vehicle_type.type_id != veh.type_id:
+                    target.vehicle_type = veh
+            else:
+                # Re-create new route object because _try_create_new_route creates a temp one
+                # Logic: reuse logic _try_create_new_route is safer
+                real_new_route = _try_create_new_route(data, cust) 
+                # (Lưu ý: _try_create sẽ trả về đúng loại xe rẻ nhất, khớp với logic tính cost trong all_moves)
+                if real_new_route: state.routes.append(real_new_route)
+
+        return state
+    return grasp_repair
+
+def create_farthest_insertion_repair_operator(data: ProblemData):
+    """
+    Ưu tiên chèn các khách hàng ở xa Depot nhất trước.
+    Logic chèn vẫn là Cheapest Insertion (tìm vị trí rẻ nhất cho khách đó).
+    """
+    # Cache khoảng cách từ Depot đến các node
+    depot_dists = data.dist_matrix[0, :]
+    
+    def farthest_repair(state: RvrpState, rng, data: ProblemData):
+        # Sort unassigned theo khoảng cách giảm dần (xa nhất ở cuối list để pop ra đầu)
+        # Hoặc sort tăng dần rồi pop() từ đuôi. 
+        # depot_dists[cust] càng lớn càng xa.
+        # Sort tăng dần -> Xa nhất ở cuối -> pop() lấy xa nhất.
+        state.unassigned.sort(key=lambda c: depot_dists[c])
+        
+        # Sau khi sort, dùng logic y hệt Greedy Repair (nhưng thứ tự xử lý khách đã cố định)
+        # Code dưới đây là copy logic Greedy nhưng bỏ dòng rng.shuffle
+        while state.unassigned:
+            customer = state.unassigned.pop() # Lấy ông xa nhất
+            
+            best_diff = float('inf')
+            best_r_idx = -1
+            best_pos = -1
+            best_metrics = None
+            best_vehicle = None
+            
+            # ... (Phần tìm vị trí chèn tốt nhất GIỐNG HỆT greedy_repair) ...
+            # 1. Existing
+            for r_idx, route in enumerate(state.routes):
+                prev_cost = route.cost 
+                for i in range(len(route.node_sequence) + 1):
+                    new_cost, metrics, new_veh = calculate_insertion_cost(data, route, customer, i)
+                    if metrics:
+                        diff = new_cost - prev_cost
+                        if diff < best_diff:
+                            best_diff = diff
+                            best_r_idx = r_idx
+                            best_pos = i
+                            best_metrics = metrics
+                            best_vehicle = new_veh
+            # 2. New
+            new_route = _try_create_new_route(data, customer)
+            if new_route:
+                if new_route.cost < best_diff:
+                    best_diff = new_route.cost
+                    best_r_idx = -1
+            
+            # Apply
+            if best_r_idx != -1:
+                target = state.routes[best_r_idx]
+                target.node_sequence.insert(best_pos, customer)
+                target.total_dist_meters = best_metrics["total_dist_meters"]
+                target.total_duration_min = best_metrics["total_duration_min"]
+                target.total_wait_time_min = best_metrics["total_wait_time_min"]
+                target.total_load_kg = best_metrics["total_load_kg"]
+                target.total_load_cbm = best_metrics["total_load_cbm"]
+                if target.vehicle_type.type_id != best_vehicle.type_id:
+                    target.vehicle_type = best_vehicle
+            elif new_route:
+                state.routes.append(new_route)
+            else:
+                pass
+
+        return state
+    return farthest_repair
+
+def _apply_sorted_insertion(state: RvrpState, data: ProblemData):
+    """
+    Helper thực hiện chèn lần lượt theo thứ tự đã sort trong state.unassigned.
+    Logic chèn: Tìm vị trí rẻ nhất (Cheapest Insertion) + Auto Upgrade Vehicle.
+    """
+    while state.unassigned:
+        # Lấy khách đầu tiên trong danh sách đã sort (dùng pop(0) hơi chậm nếu list dài, 
+        # nhưng với VRP 100-200 nodes thì OK. Để tối ưu có thể reverse list rồi pop())
+        customer = state.unassigned.pop(0) 
+        
+        best_diff = float('inf')
+        best_r_idx = -1
+        best_pos = -1
+        best_metrics = None
+        best_vehicle = None
+        
+        # 1. Existing Routes
+        for r_idx, route in enumerate(state.routes):
+            prev_cost = route.cost 
+            for i in range(len(route.node_sequence) + 1):
+                cost, metrics, veh = calculate_insertion_cost(data, route, customer, i)
+                if metrics:
+                    diff = cost - prev_cost
+                    if diff < best_diff:
+                        best_diff = diff
+                        best_r_idx = r_idx
+                        best_pos = i
+                        best_metrics = metrics
+                        best_vehicle = veh
+        
+        # 2. New Route
+        new_route = _try_create_new_route(data, customer)
+        if new_route:
+            if new_route.cost < best_diff:
+                best_diff = new_route.cost
+                best_r_idx = -1
+        
+        # 3. Apply
+        if best_r_idx != -1:
+            target = state.routes[best_r_idx]
+            target.node_sequence.insert(best_pos, customer)
+            target.total_dist_meters = best_metrics["total_dist_meters"]
+            target.total_duration_min = best_metrics["total_duration_min"]
+            target.total_wait_time_min = best_metrics["total_wait_time_min"]
+            target.total_load_kg = best_metrics["total_load_kg"]
+            target.total_load_cbm = best_metrics["total_load_cbm"]
+            
+            if target.vehicle_type.type_id != best_vehicle.type_id:
+                target.vehicle_type = best_vehicle
+        elif new_route:
+            state.routes.append(new_route)
+        else:
+            pass # Infeasible
+            
+    return state
+
+# Sorting-based operators
+def create_largest_demand_repair_operator(data: ProblemData):
+    """
+    Ưu tiên chèn khách hàng có Demand lớn trước (Bin Packing Heuristic).
+    Quan trọng cho Heterogeneous Fleet để fill xe to hiệu quả.
+    """
+    def largest_demand_repair(state: RvrpState, rng, data: ProblemData):
+        # Sort giảm dần theo Demand (KG hoặc CBM tùy cái nào dominate, ở đây ta dùng tổng hoặc KG)
+        state.unassigned.sort(key=lambda c: data.demands_kg[c], reverse=True)
+        
+        # Sau khi sort, dùng logic Greedy tuần tự (không shuffle)
+        return _apply_sorted_insertion(state, data)
+        
+    return largest_demand_repair
+
+def create_earliest_tw_repair_operator(data: ProblemData):
+    """
+    Ưu tiên khách hàng có Time Window mở sớm nhất.
+    Giúp định hình khung thời gian cho các route.
+    """
+    def earliest_tw_repair(state: RvrpState, rng, data: ProblemData):
+        # Sort tăng dần theo Start Time Window
+        state.unassigned.sort(key=lambda c: data.time_windows[c][0])
+        
+        return _apply_sorted_insertion(state, data)
+
+    return earliest_tw_repair
+
+def create_closest_to_depot_repair_operator(data: ProblemData):
+    """
+    Ưu tiên khách hàng gần Depot nhất.
+    Khuyến khích tạo các short-route cho xe nhỏ.
+    """
+    depot_dists = data.dist_matrix[0, :]
+    
+    def closest_repair(state: RvrpState, rng, data: ProblemData):
+        # Sort tăng dần theo khoảng cách tới Depot
+        state.unassigned.sort(key=lambda c: depot_dists[c])
+        
+        return _apply_sorted_insertion(state, data)
+        
+    return closest_repair
+
+
+

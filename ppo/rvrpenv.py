@@ -145,7 +145,7 @@ class RVRPEnvironment(gym.Env):
         
         # [UPDATED] Lấy giá trị thật từ ProblemData và RvrpState
         return PPOState(
-            search_progress = self.iters / alns_config.num_iterations,
+            search_progress = self.iters / alns_cfg.num_iterations,
             stagnation_norm = min(1.0, self.stagnation_counter / 50.0),
             best_cost_norm = self.best_solution.objective() / self.initial_cost,
             current_cost_norm = sol.objective() / self.initial_cost,
@@ -227,23 +227,46 @@ class RVRPEnvironment(gym.Env):
         self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=r_medium), name="route_medium")
         self.alns.add_destroy_operator(vrp.create_random_route_removal_operator(self.problem_data, ratio=r_large), name="route_large")
 
-        # --- 6. LOW UTILIZATION ROUTE REMOVAL (Optimization Focus) ---
-        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_small), name="low_util_small")
-        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_medium), name="low_util_medium")
-        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_large), name="low_util_large")
-
-        # --- 7. SEQUENCE REMOVAL (Sub-tour Focus) ---
+        # --- 6. SEQUENCE REMOVAL (Sub-tour Focus) ---
         self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_small), name="sequence_small")
         self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_medium), name="sequence_medium")
         self.alns.add_destroy_operator(vrp.create_sequence_removal_operator(self.problem_data, ratio=r_large), name="sequence_large")
 
+        # --- 7. LOW UTILIZATION ROUTE REMOVAL (Optimization Focus) ---
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_small), name="low_util_small")
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_medium), name="low_util_medium")
+        self.alns.add_destroy_operator(vrp.create_low_utilization_route_removal_operator(self.problem_data, ratio=r_large), name="low_util_large")
+
         # --- 8. ELIMINATE SMALL ROUTES (Cleaner) ---
-        self.alns.add_destroy_operator(vrp.create_eliminate_small_route_operator(self.problem_data, min_stops=3), name="eliminate_toads")
+        self.alns.add_destroy_operator(vrp.create_eliminate_small_route_operator(self.problem_data, min_stops=3), name="eliminate_small")
         
         # --- REPAIR OPERATORS ---
+        # 1. Greedy (Baseline)
         self.alns.add_repair_operator(vrp.create_greedy_repair_operator(self.problem_data), name="greedy_repair")
+        
+        # 2. Criticality (Composite Score)
         self.alns.add_repair_operator(vrp.create_criticality_repair_operator(self.problem_data), name="criticality_repair")
-        self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data), name="regret_repair")
+        
+        # 3. Regret-2 (Lookahead 2)
+        self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data, k=2), name="regret_2_repair")
+        
+        # 4. Regret-3 (Lookahead 3)
+        self.alns.add_repair_operator(vrp.create_regret_repair_operator(self.problem_data, k=3), name="regret_3_repair")
+        
+        # 5. GRASP (Randomized)
+        self.alns.add_repair_operator(vrp.create_grasp_repair_operator(self.problem_data, rcl_size=3), name="grasp_3_repair")
+        
+        # 6. Farthest (Spatial - Outside In)
+        self.alns.add_repair_operator(vrp.create_farthest_insertion_repair_operator(self.problem_data), name="farthest_repair")
+        
+        # 7. [NEW] Largest Demand (Bin Packing Focus)
+        self.alns.add_repair_operator(vrp.create_largest_demand_repair_operator(self.problem_data), name="largest_demand_repair")
+        
+        # 8. [NEW] Earliest TW (Scheduling Focus)
+        self.alns.add_repair_operator(vrp.create_earliest_tw_repair_operator(self.problem_data), name="earliest_tw_repair")
+        
+        # 9. [NEW] Closest (Spatial - Depot Focus)
+        self.alns.add_repair_operator(vrp.create_closest_to_depot_repair_operator(self.problem_data), name="closest_depot_repair")
 
 
     def _check_done(self, done_num):
@@ -252,35 +275,24 @@ class RVRPEnvironment(gym.Env):
         return self.stop_counter >= self.STOP_THRESHOLD or self.iters >= self.MAX_ITERATIONS
 
     def valid_action_mask(self) -> np.ndarray:
-        """
-        Tạo mask cho MaskablePPO. Trả về 1 array boolean phẳng (concatenated).
-        True = Valid Action, False = Invalid Action.
-        """
-        # 1. Init masks
-        # Destroy mask (Size = self.d_op_num)
+        # 1. Init masks (Default True = Valid)
         d_mask = np.ones(self.d_op_num, dtype=bool)
-        
-        # Repair mask (Size = self.r_op_num)
         r_mask = np.ones(self.r_op_num, dtype=bool)
-        
-        # Accept mask (Size = 2: Greedy, Explore) - Always Valid
         acc_mask = np.ones(2, dtype=bool)
-        
-        # Stop mask (Size = 2: Continue, Stop) - Always Valid
         stop_mask = np.ones(2, dtype=bool)
 
-        # 2. Logic Masking
+        # 2. Get State Info
         current_routes_count = len(self.current_solution.routes)
         
-        # Rule: Không thể dùng Route Removal (Index 5) nếu số route < 1
-        # Index 5 được hardcode dựa trên thứ tự đăng ký trong _register_operators
-        # (0: Rand1, 1: Rand2, 2: Rand3, 3: Worst1, 4: Worst2, 5: RouteRemoval)
-        if current_routes_count < 1:
-            if self.d_op_num > 5: # Safety check index
-                d_mask[5] = False 
+        # 3. Dynamic Masking Logic
         
-        # Rule: Nếu không có unassigned customer, Repair nào cũng chạy được (sẽ return no-op),
-        # nhưng về lý thuyết không cần mask repair.
+        # --- DESTROY MASKING ---
+        if current_routes_count == 0:
+            # Nếu chưa có route nào, CẤM các hành động yêu cầu phải có route để xóa.
+            # Duyệt qua danh sách operator thực tế để check tên
+            for i, (op_name, _) in enumerate(self.alns.destroy_operators):
+                if any(keyword in op_name for keyword in ["route", "sequence", "low_util", "eliminate"]):
+                    d_mask[i] = False
         
-        # 3. Concatenate (Quan trọng cho MultiDiscrete của SB3)
+        # 4. Concatenate and Return
         return np.concatenate([d_mask, r_mask, acc_mask, stop_mask])

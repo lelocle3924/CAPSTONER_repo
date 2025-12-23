@@ -42,22 +42,7 @@ class ALNS4PPO:
         r_idx: int, 
         accept_mode: int, # 0: Greedy Mode, 1: Exploration Mode
         **kwargs
-    ) -> Tuple[RvrpState, RvrpState]:
-        """
-        Thực thi 1 vòng lặp ALNS dưới sự chỉ đạo của Agent.
-        
-        Args:
-            current_solution: Trạng thái bắt đầu của vòng lặp (Baseline).
-            accept_mode (A3): 
-                - 0 (Greedy): Chỉ chấp nhận candidate nếu tốt hơn baseline.
-                - 1 (Explore): Chấp nhận candidate kể cả khi tệ hơn baseline.
-        
-        Returns:
-            (baseline_solution, new_solution)
-            - baseline_solution: Là current_solution đầu vào (để tính reward).
-            - new_solution: Là kết quả sau khi áp dụng luật chấp nhận (có thể là candidate mới hoặc fallback về cũ).
-        """
-        
+    ) -> Tuple[RvrpState, RvrpState]:        
         # 1. Select Operators
         d_ops_list = self.destroy_operators
         r_ops_list = self.repair_operators

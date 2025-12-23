@@ -1,6 +1,7 @@
 # file: config.py ver 3
 import os
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 
 _PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,7 +23,7 @@ class PPOConfig:
     """Hyperparameters for PPO Agent & Training Loop"""
     # --- TRAINING PARAMETERS (UPDATED FOR OVERNIGHT RUN) ---
     train_seed: int = 2025
-    num_envs: int = 8             # Parallel environments
+    num_envs: int = 4             # Parallel environments
     n_steps: int = 2048           # Steps per env per update
     batch_size: int = 64          # Minibatch size
     n_epochs: int = 10            # Epochs per update
@@ -30,7 +31,7 @@ class PPOConfig:
     
     # Total Timesteps: 1 Million for overnight
     current_trained_timesteps: int = 0
-    total_timesteps: int = 1_000_000 
+    total_timesteps: int = 50_000 
     
     save_freq: int = 5000         # Save model every 5k steps (Safety)
     
@@ -46,9 +47,11 @@ class PPOConfig:
     # --- LOGGING PATHS ---
     # Auto-generated based on logic
     def __post_init__(self):
-        self.tensorboard_log = os.path.join(PathConfig.LOGS_DIR, "ppo_tensorboard")
-        self.monitor_path = os.path.join(PathConfig.LOGS_DIR, "monitor.csv")
-        self.model_save_path = os.path.join(PathConfig.MODELS_DIR, "ppo_checkpoints")
+        now_str = datetime.now().strftime("%m%d_%H%M")
+        self.run_name = f"{now_str}_{self.total_timesteps}steps"
+        self.tensorboard_log = os.path.join(PathConfig.LOGS_DIR, "tensorboard_runs")
+        self.model_save_path = os.path.join(PathConfig.MODELS_DIR, self.run_name)
+        self.monitor_path = os.path.join(self.model_save_path, "monitor.csv")
 
 @dataclass
 class ALNSConfig:

@@ -375,14 +375,14 @@ def create_string_removal_operator(data: ProblemData, ratio: float = None):
 
     return string_removal
 
-def create_related_removal_operator(data: ProblemData, ratio: float = None):
+def create_related_removal_operator(state: RvrpState, ratio: float = None):
     # (Shaw Removal)
     def calculate_relatedness(i, j, dist_matrix, data: ProblemData):
         dist = dist_matrix[i, j]
         # Có thể thêm logic same_route nếu cần, nhưng đơn giản hóa dùng khoảng cách
         return 1.0 / (dist + 0.01)
 
-    def related_removal(state: RvrpState, rng):
+    def related_removal(state: RvrpState, rng, data: ProblemData):
         destroyed = state.copy()
         n_cust = data.num_nodes - 1
         
@@ -417,7 +417,7 @@ def create_related_removal_operator(data: ProblemData, ratio: float = None):
             # (Tạm dùng Euclidean/Distance matrix làm thước đo)
             rels = []
             for cand in current_assigned:
-                rel = calculate_relatedness(ref_node, cand, data.dist_matrix)
+                rel = calculate_relatedness(ref_node, cand, data.dist_matrix, data)
                 rels.append((rel, cand))
             
             rels.sort(key=lambda x: x[0], reverse=True) # Liên quan nhất xếp đầu
@@ -433,7 +433,7 @@ def create_related_removal_operator(data: ProblemData, ratio: float = None):
                 route.node_sequence.remove(to_remove)
                 destroyed.unassigned.append(to_remove)
 
-        return _cleanup_empty_routes(destroyed)
+        return update_destroyed_state(destroyed, data)
     return related_removal
 
 def create_sequence_removal_operator(data: ProblemData, ratio: float = None):
@@ -474,7 +474,7 @@ def create_sequence_removal_operator(data: ProblemData, ratio: float = None):
             destroyed.unassigned.extend(nodes_to_remove)
             removed_count += len(nodes_to_remove)
 
-        return _cleanup_empty_routes(destroyed)
+        return update_destroyed_state(destroyed, data)
 
     return sequence_removal
 
