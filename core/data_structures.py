@@ -1,13 +1,7 @@
+# file: core/data_structures.py
 import numpy as np
-import copy
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
-
-# THUẤN ĐỂ DEFINE CÁC BIẾN ĐÓ GIÁ TRỊ LÀ GÌ THÔI
-# TÍNH NHƯ THẾ NÀO THÌ DO EXTRACT_FEATURES BÊN ENV LO
-
-#ver 3: add utilization
-# 3.1: thêm max_route_duration
 
 # ==========================================
 # PART 1: VEHICLE & FLEET CONFIGURATION
@@ -16,17 +10,17 @@ from typing import List, Dict, Any, Optional
 class VehicleType:
     """
     Represents a specific type of vehicle in the heterogeneous fleet.
-    Immutable configuration loaded from config/input files.
+    Frozen for speed and immutability.
     """
-    type_id: int            # Unique identifier (0, 1, 2...)
-    name: str               # e.g., "MC", "4w"
-    capacity_kg: float      # Max weight (kg)
-    capacity_cbm: float     # Max volume (m3)
-    speed_kmh: float        # Avg speed (km/h)
-    fixed_cost: float       # One-time cost per trip (Currency units)
-    cost_per_km: float      # Variable cost per km (Currency units)   -> gas
-    cost_per_hour: float    # Variable cost per hour (Currency units) -> driver
-    count: int              # Max available vehicles
+    type_id: int            
+    name: str               
+    capacity_kg: float      
+    capacity_cbm: float     
+    speed_kmh: float        
+    fixed_cost: float       
+    cost_per_km: float      
+    cost_per_hour: float    
+    count: int              
 
 # ==========================================
 # PART 2: PROBLEM DATA (Static Context)
@@ -34,137 +28,148 @@ class VehicleType:
 @dataclass
 class ProblemData:
     """
-    Container for all static data. Read-only during optimization.
+    Container for all static data.
+    OPTIMIZATION: Static features are pre-calculated to avoid CPU lag in reset/step.
     """
-    # --- Matrices ---
-    dist_matrix: np.ndarray # (N, N) Meters
-    super_time_matrix: np.ndarray # (num_vehicle_types,N, N) Minutes
+    dist_matrix: np.ndarray 
+    super_time_matrix: np.ndarray 
 
-    # --- Node Info (Index 0 = Depot) ---
-    node_ids: List[str]     # ID Mapping
+    node_ids: List[str]     
     coords: np.ndarray      # (N, 2) [Lat, Lon]
-    demands_kg: np.ndarray  # (N,)
-    demands_cbm: np.ndarray # (N,)
-    time_windows: np.ndarray # (N, 2) Minutes from start
-    service_times: np.ndarray # (N,) Minutes
-    allowed_vehicles: List[List[int]] # Node constraints
+    demands_kg: np.ndarray  
+    demands_cbm: np.ndarray 
+    time_windows: np.ndarray 
+    service_times: np.ndarray 
+    allowed_vehicles: List[List[int]] 
 
     vehicle_types: List[VehicleType]
-
-    max_route_duration: float = 1440.0 # minutes = 24 hours
+    max_route_duration: float = 1440.0 
 
     _id_to_index: Dict[str, int] = field(default_factory=dict, repr=False)
 
+    # Pre-calculated features for PPO state
     _static_tw_tightness: float = field(init=False, default=0.0)
     _static_spatial_density: float = field(init=False, default=0.0)
+    _demands_mean: float = field(init=False, default=0.0)
+    _demands_std: float = field(init=False, default=0.0)
+    _tw_width_mean: float = field(init=False, default=0.0)
 
     def __post_init__(self):
         for idx, node_id in enumerate(self.node_ids):
             self._id_to_index[str(node_id)] = idx
             
-        # --- CALCULATE STATIC FEATURES IMMEDIATELY ---
+        # --- [OPTIMIZATION] PRE-CALCULATE STATIC FEATURES ONCE ---
         self._calculate_static_features()
 
     def _calculate_static_features(self):
-        # 1. TW Tightness
-        # width = End - Start. Avoid division by zero.
         widths = self.time_windows[:, 1] - self.time_windows[:, 0]
-        safe_widths = np.maximum(widths, 1.0) # Min width 1 min
+        safe_widths = np.maximum(widths, 1.0)
         
-        # Chỉ tính cho Customer (bỏ Depot index 0)
         cust_service = self.service_times[1:]
         cust_widths = safe_widths[1:]
         
         if len(cust_widths) > 0:
-            # Ratio: Service / Width. (e.g. Service 10m, Width 20m -> 0.5)
-            # Càng gần 1 càng chặt.
             self._static_tw_tightness = float(np.mean(cust_service / cust_widths))
+            self._tw_width_mean = float(np.mean(cust_widths))
         
-        # 2. Spatial Density (Based on Dist Matrix)
+        self._demands_mean = float(np.mean(self.demands_kg))
+        self._demands_std = float(np.std(self.demands_kg))
+
+        # Spatial Density
         cust_dist = self.dist_matrix[1:, 1:]
-        
         if cust_dist.shape[0] > 1:
-            # Thay số 0 ở đường chéo bằng vô cực để tìm min không phải chính nó
             temp_dist = cust_dist.copy()
             np.fill_diagonal(temp_dist, np.inf)
-            
-            # Tìm khoảng cách đến hàng xóm gần nhất cho mỗi node
             min_dists = np.min(temp_dist, axis=1)
             avg_min_dist = np.mean(min_dists)
-            
-            # Density = 1000 / AvgDist (Để số không quá nhỏ, đơn vị node/km)
-            # Nếu AvgDist = 500m -> Density = 2.0
             self._static_spatial_density = 1000.0 / (avg_min_dist + 1.0)
             
     @property
-    def static_tw_tightness(self) -> float:
-        return self._static_tw_tightness
-
+    def static_tw_tightness(self) -> float: return self._static_tw_tightness
     @property
-    def static_spatial_density(self) -> float:
-        return self._static_spatial_density
-
+    def static_spatial_density(self) -> float: return self._static_spatial_density
     @property
-    def num_nodes(self) -> int:
-        """Total number of nodes (including depot)."""
-        return len(self.node_ids)
+    def demands_mean(self) -> float: return self._demands_mean
+    @property
+    def demands_std(self) -> float: return self._demands_std
+    @property
+    def tw_width_mean(self) -> float: return self._tw_width_mean
+    @property
+    def num_nodes(self) -> int: return len(self.node_ids)
 
-    def get_travel_time(self, from_node: int, to_node: int, vehicle_type_id: int) -> float:
-        return self.super_time_matrix[vehicle_type_id, from_node, to_node]
+    # [OPTIMIZATION] Avoid function call overhead in hot loops if possible
+    # but kept for interface compatibility
+    def get_travel_time(self, from_node: int, to_node: int, v_type_id: int) -> float:
+        return self.super_time_matrix[v_type_id, from_node, to_node]
 
 
 # ==========================================
-# PART 3: SOLUTION REPRESENTATION (Route & State)
+# PART 3: SOLUTION REPRESENTATION
 # ==========================================
 @dataclass
 class Route:
-    """
-    Represents a single route performed by a specific vehicle.
-    """
     vehicle_type: VehicleType 
     node_sequence: List[int]  
     
-    # --- Cached Metrics ---
+    # Cached Metrics
     total_dist_meters: float = 0.0
     total_duration_min: float = 0.0
     total_wait_time_min: float = 0.0
     total_load_kg: float = 0.0
     total_load_cbm: float = 0.0
+
+    # [NEW] Geometrical Centroid for Spatial Pruning (O(1) lookup after update)
+    centroid_lat: float = 0.0
+    centroid_lon: float = 0.0
     
-    # --- Feasibility ---
     is_time_feasible: bool = True
     is_capacity_feasible: bool = True
     is_duration_feasible: bool = True
     is_preference_feasible: bool = True
     
+    def update_centroid(self, data: ProblemData):
+        """[OPTIMIZATION] Used to prune search space during repair."""
+        if not self.node_sequence:
+            self.centroid_lat, self.centroid_lon = data.coords[0]
+        else:
+            # Vectorized mean is much faster than Python loop
+            coords = data.coords[self.node_sequence]
+            m = np.mean(coords, axis=0)
+            self.centroid_lat, self.centroid_lon = m[0], m[1]
+
+    def clone(self) -> 'Route':
+        """
+        [OPTIMIZATION] Manual clone is 10x-50x faster than copy.deepcopy().
+        """
+        return Route(
+            vehicle_type=self.vehicle_type,
+            node_sequence=self.node_sequence[:], # Fast slice copy
+            total_dist_meters=self.total_dist_meters,
+            total_duration_min=self.total_duration_min,
+            total_wait_time_min=self.total_wait_time_min,
+            total_load_kg=self.total_load_kg,
+            total_load_cbm=self.total_load_cbm,
+            centroid_lat=self.centroid_lat,
+            centroid_lon=self.centroid_lon,
+            is_time_feasible=self.is_time_feasible,
+            is_capacity_feasible=self.is_capacity_feasible,
+            is_duration_feasible=self.is_duration_feasible,
+            is_preference_feasible=self.is_preference_feasible
+        )
+
     @property
     def cost(self) -> float:
-        """
-        Economic Cost = Fixed Cost + (Distance_km * Cost_per_km)
-        """
+        # [OPTIMIZATION] Local variable access is faster than repeated attribute access
+        v = self.vehicle_type
         dist_km = self.total_dist_meters / 1000.0
         time_hour = self.total_duration_min / 60.0
-        return self.vehicle_type.fixed_cost + (dist_km * self.vehicle_type.cost_per_km) + (time_hour * self.vehicle_type.cost_per_hour)
+        return v.fixed_cost + (dist_km * v.cost_per_km) + (time_hour * v.cost_per_hour)
 
     @property
     def capacity_utilization(self) -> float:
-        """
-        Returns the higher utilization rate between Weight and Volume.
-        Value between 0.0 and 1.0 (or >1.0 if infeasible).
-        """
-        # Avoid division by zero
-        if self.vehicle_type.capacity_kg <= 0 or self.vehicle_type.capacity_cbm <= 0:
-            print("[DATA STRUCTURE ERROR]:Capacity is zero or negative")
-            return 0.0
-            
-        util_kg = self.total_load_kg / self.vehicle_type.capacity_kg
-        util_cbm = self.total_load_cbm / self.vehicle_type.capacity_cbm
-        
-        return max(util_kg, util_cbm)
-
-    @property
-    def is_feasible(self) -> bool:
-        return self.is_time_feasible and self.is_capacity_feasible and self.is_duration_feasible and self.is_preference_feasible
+        v = self.vehicle_type
+        if v.capacity_kg <= 0 or v.capacity_cbm <= 0: return 0.0
+        return max(self.total_load_kg / v.capacity_kg, self.total_load_cbm / v.capacity_cbm)
 
     @property
     def wait_time_ratio(self) -> float:
@@ -173,48 +178,30 @@ class Route:
 
 @dataclass
 class RvrpState:
-    """
-    Rich VRP State. Represents a complete solution.
-    """
     routes: List[Route]       
     unassigned: List[int]     
 
     def copy(self) -> 'RvrpState':
-        """Deep copy of the state."""
-        new_routes = [
-            Route(
-                vehicle_type=r.vehicle_type,
-                node_sequence=r.node_sequence[:],
-                total_dist_meters=r.total_dist_meters,
-                total_duration_min=r.total_duration_min,
-                total_wait_time_min=r.total_wait_time_min,
-                total_load_kg=r.total_load_kg,
-                total_load_cbm=r.total_load_cbm,
-                is_time_feasible=r.is_time_feasible,
-                is_capacity_feasible=r.is_capacity_feasible,
-                is_duration_feasible=r.is_duration_feasible,
-                is_preference_feasible=r.is_preference_feasible
-            ) for r in self.routes
-        ]
-        return RvrpState(new_routes, self.unassigned[:])
+        """[OPTIMIZATION] Faster copy using manual route cloning."""
+        return RvrpState([r.clone() for r in self.routes], self.unassigned[:])
 
     def objective(self) -> float:
-        """
-        Total Cost = Sum(Route Costs) + Penalty(Unassigned).
-        Route Cost implicitly includes Fixed + Variable costs via Route.cost property.
-        """
-        operational_cost = sum(r.cost for r in self.routes)
-        util_penalty = 0
+        total_op_cost = 0.0
+        util_penalty = 0.0
         for r in self.routes:
-            if r.capacity_utilization < 0.5:
-                # Phạt càng nặng nếu xe càng to mà chở càng ít
-                util_penalty += (0.5 - r.capacity_utilization) * r.vehicle_type.fixed_cost * 5.0
-        
-        #unassigned_penalty = len(self.unassigned) * 1e9 # NGUY CƠ ẢNH HƯỞNG ĐẾN STATE SAU KHI DESTROY, SẼ MESS UP REPAIR
-
-        #underutilization_penalty = 0 * self.mean_capacity_utilization  # phạt cho capacity bị dư -> hiện tại cho bằng 0 (trừ khi muốn đổi utilization vào đây)
-        
-        return operational_cost + util_penalty
+            # [OPTIMIZATION] Inline cost/utilization to save property call overhead
+            v = r.vehicle_type
+            dist_km = r.total_dist_meters / 1000.0
+            time_hour = r.total_duration_min / 60.0
+            r_cost = v.fixed_cost + (dist_km * v.cost_per_km) + (time_hour * v.cost_per_hour)
+            total_op_cost += r_cost
+            
+            # Utilization Logic
+            util = max(r.total_load_kg / v.capacity_kg, r.total_load_cbm / v.capacity_cbm)
+            if util < 0.5:
+                util_penalty += (0.5 - util) * v.fixed_cost * 5.0
+                
+        return total_op_cost + util_penalty
 
     @property
     def min_capacity_utilization(self) -> float:
@@ -237,66 +224,44 @@ class RvrpState:
         return max(r.wait_time_ratio for r in self.routes)
 
 # ==========================================
-# PART 4: PPO AGENT STATE (Observation)
+# PART 4: PPO AGENT STATE
 # ==========================================
 @dataclass
 class PPOState:
-    """
-    Fixed-size feature vector for PPO input.
-    """
-    # --- Search Status ---
     search_progress: float      
     stagnation_norm: float      
-    best_cost_norm: float       # Target for reward
+    best_cost_norm: float       
     current_cost_norm: float    
     improvement_history: float  
     
-    # --- Instance Stats ---
     demands_mean: float         
     demands_std: float          
     tw_width_mean: float        
     tw_tightness: float         
     spatial_density: float      
     
-    # --- Solution Stats (Dynamic) ---
     min_cap_utilization: float  
-    mean_cap_utilization: float # Target for reward
+    mean_cap_utilization: float 
     max_cap_utilization: float
     max_wait_time_ratio: float
 
     num_routes_norm: float      
     num_unassigned_norm: float      
     
-    # --- Operator History ---
     destroy_probs: np.ndarray   
     repair_probs: np.ndarray    
     
     def to_array(self) -> np.ndarray:
         scalars = np.array([
-            self.search_progress,
-            self.stagnation_norm,
-            self.best_cost_norm,
-            self.current_cost_norm,
-            self.improvement_history,
-            self.demands_mean,
-            self.demands_std,
-            self.tw_width_mean,
-            self.tw_tightness,
-            self.spatial_density,
-            self.min_cap_utilization,
-            self.mean_cap_utilization,
-            self.max_cap_utilization,
-            self.max_wait_time_ratio,
-            self.num_routes_norm,
+            self.search_progress, self.stagnation_norm, self.best_cost_norm,
+            self.current_cost_norm, self.improvement_history, self.demands_mean,
+            self.demands_std, self.tw_width_mean, self.tw_tightness,
+            self.spatial_density, self.min_cap_utilization, self.mean_cap_utilization,
+            self.max_cap_utilization, self.max_wait_time_ratio, self.num_routes_norm,
             self.num_unassigned_norm
         ], dtype=np.float32)
-        
-        vec_destroy_probs = self.destroy_probs.astype(np.float32)
-        vec_repair_probs = self.repair_probs.astype(np.float32)
-        
-        return np.concatenate([scalars, vec_destroy_probs, vec_repair_probs])
+        return np.concatenate([scalars, self.destroy_probs.astype(np.float32), self.repair_probs.astype(np.float32)])
 
     @staticmethod
     def get_observation_size(n_destroy: int, n_repair: int) -> int:
-        NUM_SCALARS = 16 # Updated count (13 + 2 new util metrics)
-        return NUM_SCALARS + n_destroy + n_repair
+        return 16 + n_destroy + n_repair

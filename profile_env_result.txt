@@ -1,0 +1,42 @@
+(capstoner) D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo>python profile_env.py
+2025-12-24 12:13:57.542542: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING:tensorflow:From C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+>>> Setting up Environment for Profiling...
+--- Loading Data Pipeline ---
+  > Loading Fleet Config from inputs/MasterData/TruckMaster.csv...
+  > [CACHE HIT] Found existing matrix: inputs/DistTimeMatrix\distance_matrix_meters2513.csv
+    -> Loaded Matrix Shape: (43, 43)
+>>> Starting 10 Steps Loop...
+[ENV_DEBUG] Step 10: Duration=0.0351s | Op: D[2]-R[1]
+>>> Done. Total Time: 0.9342s
+
+========================================
+ TOP 20 TIME CONSUMING FUNCTIONS
+========================================
+         1499320 function calls (1443196 primitive calls) in 3.055 seconds
+
+   Ordered by: cumulative time
+   List reduced from 3710 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    3.058    3.058 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\profile_env.py:8(profile_run)
+    38649    0.575    0.000    2.749    0.000 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\alns\repairopt.py:92(check_sequence_feasibility)
+        1    0.000    0.000    2.022    2.022 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\ppo\rvrpenv.py:66(reset)
+        1    0.003    0.003    2.021    2.021 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\alns\initial.py:22(clarke_wright_heterogeneous) 
+       98    0.000    0.000    2.016    0.021 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\alns\initial.py:7(_find_best_vehicle_for_sequence)
+        1    0.000    0.000    2.011    2.011 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\dispatcher.py:343(_compile_for_args)     
+        1    0.000    0.000    1.958    1.958 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\dispatcher.py:859(compile)
+  293/274    0.001    0.000    1.331    0.005 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler_lock.py:32(_acquire_compile_lock)
+        1    0.000    0.000    1.268    1.268 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\dispatcher.py:79(compile)
+        1    0.000    0.000    1.268    1.268 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\dispatcher.py:86(_compile_cached)        
+        1    0.000    0.000    1.268    1.268 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\dispatcher.py:101(_compile_core)
+        1    0.000    0.000    1.267    1.267 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler.py:718(compile_extra)
+        1    0.000    0.000    1.266    1.266 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler.py:432(compile_extra)
+        1    0.000    0.000    1.264    1.264 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler.py:501(_compile_bytecode)       
+        1    0.000    0.000    1.264    1.264 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler.py:455(_compile_core)
+        1    0.000    0.000    1.263    1.263 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler_machinery.py:342(run)
+       26    0.002    0.000    1.262    0.049 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler_machinery.py:268(_runPass)      
+       78    0.000    0.000    1.236    0.016 C:\Users\PC\miniconda3\envs\capstoner\lib\site-packages\numba\core\compiler_machinery.py:272(check)
+       10    0.001    0.000    0.930    0.093 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\ppo\rvrpenv.py:96(step)
+       10    0.000    0.000    0.926    0.093 D:\'Uni Material\IU CAPSTONE\master_capstone\CAPSTONER_repo\alns\alns4ppo.py:37(iterate)

@@ -1,37 +1,104 @@
+# ver 6: refactored with numba etc.
+# file: alns/initial.py
 import numpy as np
+from numba import njit
+from typing import List, Tuple, Dict, Optional, Any
 from core.data_structures import RvrpState, Route, ProblemData, VehicleType
-from .repairopt import check_sequence_feasibility 
 
-#ver 5
+# ============================================================
+# 0. NUMBA ACCELERATED KERNELS
+# ============================================================
+
+@njit(fastmath=True, cache=True)
+def _evaluate_sequence_numba(dist_mat, time_mat, tw, service, dem_kg, dem_cbm, 
+                             cap_kg, cap_cbm, max_dur, depot_open, depot_close, sequence):
+    total_kg, total_cbm = 0.0, 0.0
+    for i in range(sequence.shape[0]):
+        node = sequence[i]
+        total_kg += dem_kg[node]
+        total_cbm += dem_cbm[node]
+    if total_kg > cap_kg or total_cbm > cap_cbm: return -1, 0.0, 0.0, 0.0, total_kg, total_cbm
+
+    curr_time, total_dist, total_wait, prev = depot_open, 0.0, 0.0, 0
+    for i in range(sequence.shape[0]):
+        node = sequence[i]
+        total_dist += dist_mat[prev, node]
+        curr_time += time_mat[prev, node]
+        if curr_time > tw[node, 1]: return -2, 0.0, 0.0, 0.0, total_kg, total_cbm
+        if curr_time < tw[node, 0]:
+            total_wait += (tw[node, 0] - curr_time)
+            curr_time = tw[node, 0]
+        curr_time += service[node]
+        prev = node
+    
+    total_dist += dist_mat[prev, 0]
+    curr_time += time_mat[prev, 0]
+    if curr_time > depot_close: return -3, 0.0, 0.0, 0.0, total_kg, total_cbm
+    dur = curr_time - depot_open
+    if dur > max_dur: return -4, 0.0, 0.0, 0.0, total_kg, total_cbm
+    return 1, total_dist, dur, total_wait, total_kg, total_cbm
+
+def check_sequence_feasibility(data: ProblemData, vehicle: VehicleType, node_sequence: List[int]):
+    if not node_sequence: return True, None, "Empty"
+    seq_arr = np.array(node_sequence, dtype=np.int32)
+    status, dist, dur, wait, kg, cbm = _evaluate_sequence_numba(
+        data.dist_matrix, data.super_time_matrix[vehicle.type_id], data.time_windows, 
+        data.service_times, data.demands_kg, data.demands_cbm, vehicle.capacity_kg, 
+        vehicle.capacity_cbm, data.max_route_duration, data.time_windows[0][0], 
+        data.time_windows[0][1], seq_arr
+    )
+    if status == 1:
+        return True, {"total_dist_meters": dist, "total_duration_min": dur, "total_wait_time_min": wait, "total_load_kg": kg, "total_load_cbm": cbm}, "OK"
+    return False, None, str(status)
+
 
 def _find_best_vehicle_for_sequence(data: ProblemData, sequence: list[int]) -> tuple[VehicleType, dict]:
     """
-    Tìm xe rẻ nhất thỏa mãn sequence.
-    Trả về (VehicleType, Metrics) hoặc (None, None)
+    [OPTIMIZED] Uses Numba engine to find best vehicle.
     """
-    # Sort fleet by fixed cost (ưu tiên xe nhỏ/rẻ)
+    # Sort fleet by fixed cost to find the cheapest feasible option
     sorted_fleet = sorted(data.vehicle_types, key=lambda v: v.fixed_cost)
     
     for v in sorted_fleet:
+        # Accelerated call to Numba simulation
         is_feasible, metrics, _ = check_sequence_feasibility(data, v, sequence)
         if is_feasible:
             return v, metrics
-            
     return None, None
+
+def one_for_one(data: ProblemData) -> RvrpState:
+    """
+    [OPTIMIZED] Dummy initialization for 0.001s resets during training.
+    """
+    routes = []
+    # Use the cheapest vehicle available
+    v_type = min(data.vehicle_types, key=lambda x: x.fixed_cost)
+    
+    for i in range(1, data.num_nodes):
+        # Create single-node route
+        r = Route(v_type, [i])
+        # We perform a quick simulation to fill mandatory metrics
+        is_f, metrics, _ = check_sequence_feasibility(data, v_type, [i])
+        if metrics:
+            r.total_dist_meters = metrics['total_dist_meters']
+            r.total_duration_min = metrics['total_duration_min']
+            r.total_load_kg = metrics['total_load_kg']
+            r.total_load_cbm = metrics['total_load_cbm']
+        # Centroid is vital for repair operators
+        r.update_centroid(data)
+        routes.append(r)
+        
+    return RvrpState(routes, [])
 
 def clarke_wright_heterogeneous(data: ProblemData) -> RvrpState:
     """
-    Parallel Clarke-Wright Savings adapted for Heterogeneous Fleet.
-    Fixed: Removed 'set' usage for Route objects to avoid TypeError.
+    [OPTIMIZED] Standard CW with Numba feasibility and centroid updates.
     """
-    
-    # 1. Init: Mỗi khách 1 route riêng biệt với xe bé nhất (Best Fit)
     customers = [i for i in range(1, data.num_nodes)]
     initial_routes = []
+    node_to_route = {}
     
-    # Map: Node ID -> Route Object mà node đó đang thuộc về
-    node_to_route: dict[int, Route] = {}
-    
+    # 1. Initial State: Best Fit for single nodes
     for cust in customers:
         v, metrics = _find_best_vehicle_for_sequence(data, [cust])
         if v:
@@ -41,92 +108,57 @@ def clarke_wright_heterogeneous(data: ProblemData) -> RvrpState:
                       total_wait_time_min=metrics['total_wait_time_min'],
                       total_load_kg=metrics['total_load_kg'],
                       total_load_cbm=metrics['total_load_cbm'])
+            r.update_centroid(data)
             initial_routes.append(r)
             node_to_route[cust] = r
-        else:
-            # Khách này không xe nào chở được (lẻ loi) -> Sẽ thành Unassigned
-            pass 
 
-    # 2. Calculate Savings
-    # S_ij = Dist(i,0) + Dist(0,j) - Dist(i,j)
+    # 2. Savings Calculation
     savings = []
+    dm = data.dist_matrix
     for i in customers:
-        for j in customers:
-            if i >= j: continue
-            # Chỉ tính saving nếu cả 2 node đều đã được gán route ban đầu
-            if i in node_to_route and j in node_to_route:
-                s = data.dist_matrix[i, 0] + data.dist_matrix[0, j] - data.dist_matrix[i, j]
-                if s > 0:
-                    savings.append((s, i, j))
+        if i not in node_to_route: continue
+        for j in range(i + 1, data.num_nodes):
+            if j not in node_to_route: continue
+            s = dm[i, 0] + dm[0, j] - dm[i, j]
+            if s > 0:
+                savings.append((s, i, j))
     
-    # Sort giảm dần (ưu tiên merge lợi nhất trước)
     savings.sort(key=lambda x: x[0], reverse=True)
 
     # 3. Merge Loop
-    for s_val, i, j in savings:
-        # Lấy route hiện tại chứa i và j
+    for _, i, j in savings:
         r_i = node_to_route.get(i)
         r_j = node_to_route.get(j)
         
-        # Nếu một trong 2 node không còn route (đã bị xử lý lỗi) hoặc
-        # Hai node CÙNG nằm trong 1 route rồi -> Skip
         if r_i is None or r_j is None or r_i is r_j:
             continue
             
-        # Kiểm tra topo: i phải là điểm cuối r_i, j là điểm đầu r_j HOẶC ngược lại
-        # (Standard CW logic)
-        i_is_start = (r_i.node_sequence[0] == i)
-        i_is_end = (r_i.node_sequence[-1] == i)
-        j_is_start = (r_j.node_sequence[0] == j)
-        j_is_end = (r_j.node_sequence[-1] == j)
+        # Check endpoints
+        i_end = (r_i.node_sequence[-1] == i)
+        j_start = (r_j.node_sequence[0] == j)
         
-        merge_seq = None
-        
-        # Case 1: ... -> i  +  j -> ...
-        if i_is_end and j_is_start:
+        if i_end and j_start:
             merge_seq = r_i.node_sequence + r_j.node_sequence
+            new_v, metrics = _find_best_vehicle_for_sequence(data, merge_seq)
             
-        # Case 2: ... -> j  +  i -> ...
-        elif j_is_end and i_is_start:
-            merge_seq = r_j.node_sequence + r_i.node_sequence
-            
-        # Case 3: Đảo ngược route để khớp (Optional, nhưng tăng khả năng merge)
-        # Tạm thời bỏ qua để giữ logic đơn giản và đúng hướng luồng (Time Window)
-            
-        if merge_seq:
-            # Tìm xe phù hợp cho chuỗi đã gộp (UPGRADE VEHICLE logic)
-            new_vehicle, metrics = _find_best_vehicle_for_sequence(data, merge_seq)
-            
-            if new_vehicle:
-                # MERGE SUCCESS!
-                
-                # 1. Update r_i thành route mới (Winner takes all)
+            if new_v:
+                # Merge logic
                 r_i.node_sequence = merge_seq
-                r_i.vehicle_type = new_vehicle
+                r_i.vehicle_type = new_v
                 r_i.total_dist_meters = metrics['total_dist_meters']
                 r_i.total_duration_min = metrics['total_duration_min']
-                r_i.total_wait_time_min = metrics['total_wait_time_min']
                 r_i.total_load_kg = metrics['total_load_kg']
                 r_i.total_load_cbm = metrics['total_load_cbm']
+                r_i.update_centroid(data)
                 
-                # 2. Update pointers: Tất cả node trong r_j giờ thuộc về r_i
                 for node in r_j.node_sequence:
                     node_to_route[node] = r_i
+                r_j.node_sequence = [] # Kill route
                 
-                # 3. Mark r_j as empty/dead (để lọc sau)
-                r_j.node_sequence = []
-                
-    # 4. Finalize: Lọc bỏ các route rỗng
     final_routes = [r for r in initial_routes if len(r.node_sequence) > 0]
-    
-    # Tìm unassigned (những node không có trong map ban đầu)
     unassigned = [i for i in range(1, data.num_nodes) if i not in node_to_route]
     
     return RvrpState(final_routes, unassigned)
-
-# Wrapper function để tương thích ngược
-def one_for_one(data):
-    return clarke_wright_heterogeneous(data)
 
 def neighbors(dist_matrix, customer_idx):
     locations = np.argsort(dist_matrix[customer_idx])

@@ -1,71 +1,56 @@
-# file: config.py ver 3
+# file: config.py
 import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
-_PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-
 @dataclass
 class PathConfig:
-    """Centralized File Paths"""
-    # Inputs
-    ORDER_PATH: str = "inputs/CleanData/Split_TransportOrder_2524.csv" # Hoặc Split_TransportOrder_2524.csv
+    ORDER_PATH: str = "inputs/CleanData/Split_TransportOrder_allabove1_2513.csv"
     TRUCK_PATH: str = "inputs/MasterData/TruckMaster.csv"
-    
-    # Outputs / Cache
     DISTANCE_TIME_PATH: str = "inputs/DistTimeMatrix"
     RESULTS_DIR: str = "results"
     LOGS_DIR: str = "logs"
     MODELS_DIR: str = "models"
+    MODEL_PATH: str = "models/VRPTW_1225_1231/vrp_model_930000_steps.zip"
 
 @dataclass
 class PPOConfig:
-    """Hyperparameters for PPO Agent & Training Loop"""
-    # --- TRAINING PARAMETERS (UPDATED FOR OVERNIGHT RUN) ---
     train_seed: int = 2025
-    num_envs: int = 4             # Parallel environments
-    n_steps: int = 2048           # Steps per env per update
-    batch_size: int = 64          # Minibatch size
-    n_epochs: int = 10            # Epochs per update
-    learning_rate: float = 3e-4   # Stable LR
+    # [TRIAL SETTINGS] 
+    # Use 4-8 for Colab. If CPU hits 100% and GPU is low, decrease this.
+    num_envs: int = 4             
     
-    # Total Timesteps: 1 Million for overnight
-    current_trained_timesteps: int = 0
-    total_timesteps: int = 50_000 
+    # [GPU THROUGHPUT]
+    # n_steps * num_envs = Total samples per update. 
+    # 2048 * 4 = 8192 samples per update.
+    n_steps: int = 2048           
+    batch_size: int = 256         # Increased from 64 for better GPU utilization
+    n_epochs: int = 10            
+    learning_rate: float = 3e-4   
+    ent_coef: float = 0.01        
     
-    save_freq: int = 5000         # Save model every 5k steps (Safety)
+    # [TIMESTEPS]
+    current_trained_timesteps: int = 930000
+    total_timesteps: int = 1_500_000 # 1M for overnight run
+    save_freq: int = 50000         # Save every 10k steps
     
-    # --- REWARD FUNCTION (TUNED) ---
-    # Tăng trọng số Utilization để ép Agent lấp đầy xe
-    reward_cost_scale: float = 4.0
-    reward_util_lambda: float = 0.2  # UPDATED: Was 0.05
-    stop_threshold: float = 1000     # Early stopping patience
+    reward_cost_scale: float = 5.0  # Increased weight on cost
+    reward_util_lambda: float = 0.5 # Stronger push for full trucks
+    stop_threshold: int = 50        # Stop episode after 50 steps of no improvement
+
+    base_step_penalty: float = 0.005    # Phạt nhẹ mỗi step RL
+    operator_time_limit: float = 2.0    # Ngưỡng thời gian (giây) cho 1 cặp D+R. Vượt ngưỡng này sẽ bị phạt thêm.
+    operator_penalty_scale: float = 0.01
     
-    # --- DEVICE ---
-    device: str = "cpu" # or "cuda" if available
-    
-    # --- LOGGING PATHS ---
-    # Auto-generated based on logic
+    device: str = "auto"
+
     def __post_init__(self):
         now_str = datetime.now().strftime("%m%d_%H%M")
-        self.run_name = f"{now_str}_{self.total_timesteps}steps"
-        self.tensorboard_log = os.path.join(PathConfig.LOGS_DIR, "tensorboard_runs")
+        self.run_name = f"VRPTW_{now_str}"
+        self.tensorboard_log = os.path.join(PathConfig.LOGS_DIR, "tb")
         self.model_save_path = os.path.join(PathConfig.MODELS_DIR, self.run_name)
         self.monitor_path = os.path.join(self.model_save_path, "monitor.csv")
 
 @dataclass
 class ALNSConfig:
-    """Hyperparameters for the Heuristic Engine"""
-    seed: int = 520
-    num_iterations: int = 100 # iterations per PPO step
-    
-    # Operator counts (Will be auto-filled by environment registration)
-    num_destroy: int = 0 
-    num_repair: int = 0
-    
-    # Internal ALNS logic
-    roulette_wheel_scores: list[float] = field(default_factory=lambda: [25, 5, 1, 0])
-    roulette_wheel_decay: float = 0.9
-
-    def get_alns_params_dict(self):
-        return asdict(self)
+    num_iterations: int = 100      # 100 ALNS iterations per 1 RL Step

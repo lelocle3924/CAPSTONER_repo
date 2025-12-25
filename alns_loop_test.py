@@ -145,7 +145,7 @@ def main():
     log_to_file(f_log, f"TEST SESSION START: {datetime.now()}\n")
     log_to_file(f_log, f"Order File: {ORDER_PATH}")
     # Init Env
-    env = RVRPEnvironment(ORDER_PATH, TRUCK_PATH, is_test_mode=True)
+    env = RVRPEnvironment(ORDER_PATH, TRUCK_PATH, is_test_mode=False)
     
     # Init Visualizer
     viz = None

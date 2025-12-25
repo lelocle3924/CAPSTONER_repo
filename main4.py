@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import CheckpointCallback
 
 from core import LightLogger
@@ -30,8 +30,15 @@ def mask_fn(env):
     return env.valid_action_mask()
 
 def make_env(is_test_mode=False):
+    """
+    Factory function for SubprocVecEnv. 
+    Must be fully self-contained or use global picklable objects.
+    """
     def _init():
-        # [UPDATED] Use centralized paths
+        # Re-import inside process to ensure isolation (optional but safe)
+        from ppo.rvrpenv import RVRPEnvironment
+        from sb3_contrib.common.wrappers import ActionMasker
+        
         env = RVRPEnvironment(
             order_csv_path=path_cfg.ORDER_PATH,
             truck_csv_path=path_cfg.TRUCK_PATH,
@@ -47,8 +54,14 @@ def train_ppo():
     os.makedirs(ppo_cfg.tensorboard_log, exist_ok=True)
 
     # Env
-    logger.info(f"Initializing {ppo_cfg.num_envs} parallel environments...")
-    train_env = DummyVecEnv([make_env(is_test_mode=False) for _ in range(ppo_cfg.num_envs)])
+    if ppo_cfg.num_envs > 1:
+        logger.info(f"Initializing {ppo_cfg.num_envs} PARALLEL environments (SubprocVecEnv)...")
+        # start_method='fork' is default on Linux, 'spawn' on Windows. SB3 handles this.
+        train_env = SubprocVecEnv([make_env(is_test_mode=False) for _ in range(ppo_cfg.num_envs)])
+    else:
+        logger.info("Initializing SINGLE environment (DummyVecEnv)...")
+        train_env = DummyVecEnv([make_env(is_test_mode=False)])
+        
     train_env = VecMonitor(train_env, ppo_cfg.monitor_path)
 
     # Model
@@ -123,6 +136,9 @@ def evaluate_model():
             visualizer.visualize_solution(best_sol, real_env.problem_data, filename="nightly_eval_result.html")
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
+    
     if args.mode == "train":
         train_ppo()
     else:

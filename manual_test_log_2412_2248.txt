@@ -1,0 +1,810 @@
+TEST SESSION START: 2025-12-24 22:48:23.088656
+
+Order File: inputs/CleanData/Split_TransportOrder_allabove1_2524.csv
+[INIT] SUMMARY:
+  Total Cost: 49,440.58
+  Total Routes: 168
+  Unassigned: 0
+  Mean Util: 17.24%
+  > ROUTE DETAILS:
+        R01: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R02: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R04: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R05: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R06: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R07: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R08: Type=MC    | Load=4/150kg      | Stops=1   | Cost=650
+        R09: Type=MC    | Load=62/150kg     | Stops=1   | Cost=465
+        R10: Type=MC    | Load=139/150kg    | Stops=1   | Cost=889
+        R11: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R13: Type=MC    | Load=0/150kg      | Stops=1   | Cost=267
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R15: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R16: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R17: Type=MC    | Load=28/150kg     | Stops=1   | Cost=838
+        R18: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R19: Type=MC    | Load=103/150kg    | Stops=1   | Cost=694
+        R20: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R21: Type=MC    | Load=112/150kg    | Stops=1   | Cost=559
+        R22: Type=MC    | Load=124/150kg    | Stops=1   | Cost=546
+        R23: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R24: Type=MC    | Load=11/150kg     | Stops=1   | Cost=485
+        R25: Type=MC    | Load=62/150kg     | Stops=1   | Cost=332
+        R26: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R27: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R28: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R29: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R30: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R31: Type=MC    | Load=8/150kg      | Stops=1   | Cost=626
+        R32: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R33: Type=MC    | Load=50/150kg     | Stops=1   | Cost=292
+        R34: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R35: Type=MC    | Load=50/150kg     | Stops=1   | Cost=635
+        R36: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R37: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R38: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R39: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R40: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R41: Type=MC    | Load=27/150kg     | Stops=1   | Cost=521
+        R42: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R43: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R44: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R45: Type=MC    | Load=110/150kg    | Stops=1   | Cost=839
+        R46: Type=MC    | Load=0/150kg      | Stops=1   | Cost=816
+        R47: Type=MC    | Load=136/150kg    | Stops=1   | Cost=618
+        R48: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R49: Type=MC    | Load=81/150kg     | Stops=1   | Cost=715
+        R50: Type=MC    | Load=25/150kg     | Stops=1   | Cost=428
+        R51: Type=MC    | Load=50/150kg     | Stops=1   | Cost=849
+        R52: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R53: Type=MC    | Load=139/150kg    | Stops=1   | Cost=537
+        R54: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R55: Type=MC    | Load=50/150kg     | Stops=1   | Cost=710
+        R56: Type=MC    | Load=40/150kg     | Stops=1   | Cost=454
+        R57: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R58: Type=MC    | Load=0/150kg      | Stops=1   | Cost=575
+        R59: Type=MC    | Load=112/150kg    | Stops=1   | Cost=456
+        R60: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R61: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R62: Type=MC    | Load=81/150kg     | Stops=1   | Cost=268
+        R63: Type=MC    | Load=64/150kg     | Stops=1   | Cost=493
+        R64: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R65: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R66: Type=MC    | Load=50/150kg     | Stops=1   | Cost=609
+        R67: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R68: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R69: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R70: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R71: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R72: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R73: Type=MC    | Load=54/150kg     | Stops=1   | Cost=581
+        R74: Type=MC    | Load=27/150kg     | Stops=1   | Cost=477
+        R75: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R76: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R77: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R78: Type=MC    | Load=62/150kg     | Stops=1   | Cost=826
+        R79: Type=MC    | Load=86/150kg     | Stops=1   | Cost=431
+        R80: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R81: Type=MC    | Load=54/150kg     | Stops=1   | Cost=511
+        R82: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R83: Type=MC    | Load=50/150kg     | Stops=1   | Cost=469
+        R84: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R85: Type=MC    | Load=137/150kg    | Stops=1   | Cost=490
+        R86: Type=MC    | Load=62/150kg     | Stops=1   | Cost=271
+        R87: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R88: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R89: Type=MC    | Load=50/150kg     | Stops=1   | Cost=686
+        R90: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R91: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R92: Type=MC    | Load=50/150kg     | Stops=1   | Cost=367
+        R93: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R94: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R95: Type=MC    | Load=27/150kg     | Stops=1   | Cost=569
+        R96: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R97: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R98: Type=MC    | Load=112/150kg    | Stops=1   | Cost=501
+        R99: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R100: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R101: Type=MC    | Load=90/150kg     | Stops=1   | Cost=690
+        R102: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R103: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R104: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R105: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R106: Type=MC    | Load=62/150kg     | Stops=1   | Cost=459
+        R107: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R108: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R109: Type=MC    | Load=50/150kg     | Stops=1   | Cost=688
+        R110: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R111: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R112: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R113: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R114: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R115: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R116: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R117: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R118: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R119: Type=MC    | Load=50/150kg     | Stops=1   | Cost=319
+        R120: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R121: Type=MC    | Load=50/150kg     | Stops=1   | Cost=273
+        R122: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R123: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R124: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R125: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R126: Type=MC    | Load=46/150kg     | Stops=1   | Cost=566
+        R127: Type=MC    | Load=116/150kg    | Stops=1   | Cost=592
+        R128: Type=MC    | Load=50/150kg     | Stops=1   | Cost=762
+        R129: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R130: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R131: Type=MC    | Load=50/150kg     | Stops=1   | Cost=822
+        R132: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R133: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R134: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R135: Type=MC    | Load=16/150kg     | Stops=1   | Cost=525
+        R136: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R137: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R138: Type=MC    | Load=112/150kg    | Stops=1   | Cost=769
+        R139: Type=MC    | Load=55/150kg     | Stops=1   | Cost=472
+        R140: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R141: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R142: Type=MC    | Load=3/150kg      | Stops=1   | Cost=469
+        R143: Type=MC    | Load=112/150kg    | Stops=1   | Cost=450
+        R144: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R145: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R146: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R147: Type=MC    | Load=144/150kg    | Stops=1   | Cost=470
+        R148: Type=MC    | Load=49/150kg     | Stops=1   | Cost=516
+        R149: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R150: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R151: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R152: Type=MC    | Load=150/150kg    | Stops=1   | Cost=414
+        R153: Type=MC    | Load=137/150kg    | Stops=1   | Cost=525
+        R154: Type=MC    | Load=27/150kg     | Stops=1   | Cost=772
+        R155: Type=MC    | Load=50/150kg     | Stops=1   | Cost=779
+        R156: Type=MC    | Load=112/150kg    | Stops=1   | Cost=616
+        R157: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R158: Type=MC    | Load=50/150kg     | Stops=1   | Cost=757
+        R159: Type=MC    | Load=70/150kg     | Stops=1   | Cost=550
+        R160: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R161: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R162: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R163: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R164: Type=MC    | Load=3/150kg      | Stops=1   | Cost=403
+        R165: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R166: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R167: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R168: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 1] SUMMARY:
+  Total Cost: 36,593.03
+  Total Routes: 84
+  Unassigned: 0
+  Mean Util: 24.97%
+  > ROUTE DETAILS:
+        R01: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R02: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R03: Type=MC    | Load=4/150kg      | Stops=1   | Cost=650
+        R04: Type=AUV   | Load=808/1000kg   | Stops=2   | Cost=684
+        R05: Type=MC    | Load=139/150kg    | Stops=1   | Cost=889
+        R06: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R07: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R08: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R09: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R10: Type=MC    | Load=28/150kg     | Stops=1   | Cost=838
+        R11: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R12: Type=MC    | Load=62/150kg     | Stops=1   | Cost=332
+        R13: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R15: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R16: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R17: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R18: Type=MC    | Load=50/150kg     | Stops=1   | Cost=292
+        R19: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R20: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R21: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R22: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R23: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R24: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R25: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R26: Type=MC    | Load=110/150kg    | Stops=2   | Cost=826
+        R27: Type=MC    | Load=100/150kg    | Stops=3   | Cost=811
+        R28: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R29: Type=MC    | Load=25/150kg     | Stops=1   | Cost=428
+    >>> R30: Type=6w    | Load=4119/7000kg  | Stops=8   | Cost=1,946
+        R31: Type=MC    | Load=139/150kg    | Stops=1   | Cost=537
+        R32: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R33: Type=MC    | Load=50/150kg     | Stops=1   | Cost=710
+        R34: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R35: Type=AUV   | Load=773/1000kg   | Stops=4   | Cost=755
+        R36: Type=MC    | Load=81/150kg     | Stops=1   | Cost=268
+        R37: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R38: Type=4w    | Load=1640/2000kg  | Stops=4   | Cost=1,120
+        R39: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R40: Type=MC    | Load=27/150kg     | Stops=1   | Cost=477
+        R41: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R42: Type=4w    | Load=1924/2000kg  | Stops=8   | Cost=1,724
+        R43: Type=MC    | Load=86/150kg     | Stops=1   | Cost=431
+        R44: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R45: Type=6w    | Load=4100/7000kg  | Stops=10  | Cost=1,555
+    >>> R46: Type=6w    | Load=4434/7000kg  | Stops=9   | Cost=1,322
+        R47: Type=MC    | Load=62/150kg     | Stops=2   | Cost=277
+        R48: Type=MC    | Load=50/150kg     | Stops=1   | Cost=367
+        R49: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R50: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R51: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R52: Type=MC    | Load=112/150kg    | Stops=1   | Cost=501
+        R53: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R54: Type=MC    | Load=62/150kg     | Stops=1   | Cost=459
+    >>> R55: Type=4w    | Load=1998/2000kg  | Stops=10  | Cost=1,584
+        R56: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R57: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R58: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R59: Type=MC    | Load=50/150kg     | Stops=1   | Cost=319
+        R60: Type=MC    | Load=50/150kg     | Stops=1   | Cost=273
+        R61: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R62: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R63: Type=4w    | Load=1680/2000kg  | Stops=9   | Cost=1,570
+        R64: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R65: Type=6w    | Load=2451/7000kg  | Stops=9   | Cost=2,008
+        R66: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R67: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R68: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R69: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R70: Type=MC    | Load=112/150kg    | Stops=1   | Cost=769
+        R71: Type=MC    | Load=3/150kg      | Stops=1   | Cost=469
+        R72: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R73: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R74: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R75: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R76: Type=MC    | Load=150/150kg    | Stops=1   | Cost=414
+    >>> R77: Type=4w    | Load=1961/2000kg  | Stops=9   | Cost=1,596
+        R78: Type=MC    | Load=50/150kg     | Stops=1   | Cost=779
+    >>> R79: Type=6w    | Load=4948/7000kg  | Stops=10  | Cost=1,945
+        R80: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R81: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R82: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R83: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R84: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 2] SUMMARY:
+  Total Cost: 34,862.28
+  Total Routes: 51
+  Unassigned: 0
+  Mean Util: 41.49%
+  > ROUTE DETAILS:
+    >>> R01: Type=4w    | Load=1161/2000kg  | Stops=6   | Cost=1,319
+        R02: Type=MC    | Load=139/150kg    | Stops=2   | Cost=890
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R04: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R05: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R06: Type=MC    | Load=62/150kg     | Stops=1   | Cost=332
+        R07: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R08: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R09: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R10: Type=MC    | Load=50/150kg     | Stops=1   | Cost=292
+        R11: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R13: Type=MC    | Load=138/150kg    | Stops=2   | Cost=843
+        R14: Type=MC    | Load=127/150kg    | Stops=4   | Cost=1,086
+    >>> R15: Type=6w    | Load=4314/7000kg  | Stops=8   | Cost=1,816
+        R16: Type=MC    | Load=139/150kg    | Stops=1   | Cost=537
+        R17: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R18: Type=MC    | Load=100/150kg    | Stops=2   | Cost=718
+        R19: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+    >>> R20: Type=4w    | Load=1847/2000kg  | Stops=9   | Cost=1,282
+        R21: Type=MC    | Load=81/150kg     | Stops=1   | Cost=268
+    >>> R22: Type=6w    | Load=6844/7000kg  | Stops=10  | Cost=1,906
+        R23: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R24: Type=MC    | Load=27/150kg     | Stops=1   | Cost=477
+    >>> R25: Type=6w    | Load=4452/7000kg  | Stops=10  | Cost=1,984
+    >>> R26: Type=4w    | Load=1810/2000kg  | Stops=9   | Cost=1,316
+    >>> R27: Type=6w    | Load=6317/7000kg  | Stops=10  | Cost=1,563
+        R28: Type=MC    | Load=62/150kg     | Stops=2   | Cost=277
+        R29: Type=MC    | Load=50/150kg     | Stops=1   | Cost=367
+        R30: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R31: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R32: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R33: Type=MC    | Load=112/150kg    | Stops=1   | Cost=501
+        R34: Type=MC    | Load=124/150kg    | Stops=2   | Cost=505
+    >>> R35: Type=4w    | Load=1925/2000kg  | Stops=8   | Cost=1,647
+        R36: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R37: Type=MC    | Load=50/150kg     | Stops=1   | Cost=273
+    >>> R38: Type=6w    | Load=2339/7000kg  | Stops=10  | Cost=1,927
+        R39: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R40: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R41: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R42: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R43: Type=6w    | Load=3513/7000kg  | Stops=10  | Cost=2,010
+    >>> R44: Type=6w    | Load=3684/7000kg  | Stops=8   | Cost=1,514
+        R45: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R46: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R47: Type=MC    | Load=150/150kg    | Stops=1   | Cost=414
+    >>> R48: Type=6w    | Load=5054/7000kg  | Stops=10  | Cost=2,334
+        R49: Type=AUV   | Load=996/1000kg   | Stops=5   | Cost=1,305
+    >>> R50: Type=4w    | Load=1917/2000kg  | Stops=10  | Cost=1,645
+        R51: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 3] SUMMARY:
+  Total Cost: 34,187.42
+  Total Routes: 36
+  Unassigned: 0
+  Mean Util: 48.32%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=2109/7000kg  | Stops=9   | Cost=1,420
+        R02: Type=AUV   | Load=756/1000kg   | Stops=6   | Cost=1,669
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R04: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R05: Type=MC    | Load=124/150kg    | Stops=2   | Cost=529
+        R06: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R07: Type=MC    | Load=138/150kg    | Stops=3   | Cost=829
+        R08: Type=MC    | Load=150/150kg    | Stops=3   | Cost=1,106
+    >>> R09: Type=6w    | Load=4819/7000kg  | Stops=9   | Cost=2,145
+        R10: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R11: Type=MC    | Load=150/150kg    | Stops=3   | Cost=727
+        R12: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R13: Type=AUV   | Load=850/1000kg   | Stops=8   | Cost=1,081
+    >>> R14: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R15: Type=6w    | Load=3770/7000kg  | Stops=9   | Cost=1,954
+        R16: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R17: Type=4w    | Load=1844/2000kg  | Stops=8   | Cost=1,428
+    >>> R18: Type=6w    | Load=4260/7000kg  | Stops=8   | Cost=2,156
+    >>> R19: Type=4w    | Load=1916/2000kg  | Stops=8   | Cost=1,556
+    >>> R20: Type=6w    | Load=5799/7000kg  | Stops=10  | Cost=1,362
+        R21: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R22: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R23: Type=MC    | Load=112/150kg    | Stops=1   | Cost=501
+    >>> R24: Type=4w    | Load=1979/2000kg  | Stops=8   | Cost=1,575
+        R25: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R26: Type=MC    | Load=50/150kg     | Stops=1   | Cost=273
+    >>> R27: Type=4w    | Load=1817/2000kg  | Stops=9   | Cost=1,477
+        R28: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R29: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R30: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R31: Type=6w    | Load=3140/7000kg  | Stops=12  | Cost=2,077
+    >>> R32: Type=6w    | Load=4226/7000kg  | Stops=8   | Cost=1,528
+        R33: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R34: Type=6w    | Load=5170/7000kg  | Stops=11  | Cost=2,200
+    >>> R35: Type=6w    | Load=3047/7000kg  | Stops=8   | Cost=1,902
+    >>> R36: Type=6w    | Load=4931/7000kg  | Stops=9   | Cost=2,034
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 4] SUMMARY:
+  Total Cost: 34,037.33
+  Total Routes: 30
+  Unassigned: 0
+  Mean Util: 60.19%
+  > ROUTE DETAILS:
+    >>> R01: Type=4w    | Load=1960/2000kg  | Stops=9   | Cost=1,213
+        R02: Type=AUV   | Load=987/1000kg   | Stops=11  | Cost=1,739
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R04: Type=AUV   | Load=607/1000kg   | Stops=4   | Cost=991
+        R05: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R06: Type=6w    | Load=4855/7000kg  | Stops=8   | Cost=1,747
+    >>> R07: Type=4w    | Load=1628/2000kg  | Stops=3   | Cost=1,516
+    >>> R08: Type=6w    | Load=2100/7000kg  | Stops=8   | Cost=2,073
+        R09: Type=MC    | Load=50/150kg     | Stops=1   | Cost=469
+        R10: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R11: Type=AUV   | Load=729/1000kg   | Stops=8   | Cost=1,082
+    >>> R12: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R13: Type=6w    | Load=6709/7000kg  | Stops=10  | Cost=1,824
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R15: Type=4w    | Load=1817/2000kg  | Stops=7   | Cost=1,311
+    >>> R16: Type=6w    | Load=5082/7000kg  | Stops=11  | Cost=2,753
+    >>> R17: Type=4w    | Load=1968/2000kg  | Stops=8   | Cost=1,711
+    >>> R18: Type=6w    | Load=5459/7000kg  | Stops=10  | Cost=1,283
+        R19: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R20: Type=MC    | Load=139/150kg    | Stops=2   | Cost=613
+    >>> R21: Type=6w    | Load=2804/7000kg  | Stops=8   | Cost=1,872
+        R22: Type=MC    | Load=50/150kg     | Stops=1   | Cost=273
+    >>> R23: Type=4w    | Load=1983/2000kg  | Stops=9   | Cost=1,777
+        R24: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R25: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R26: Type=4w    | Load=1990/2000kg  | Stops=12  | Cost=2,042
+    >>> R27: Type=4w    | Load=1896/2000kg  | Stops=4   | Cost=1,107
+        R28: Type=AUV   | Load=986/1000kg   | Stops=7   | Cost=957
+    >>> R29: Type=6w    | Load=4029/7000kg  | Stops=8   | Cost=1,932
+    >>> R30: Type=6w    | Load=5670/7000kg  | Stops=10  | Cost=1,703
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 5] SUMMARY:
+  Total Cost: 32,589.78
+  Total Routes: 26
+  Unassigned: 0
+  Mean Util: 64.23%
+  > ROUTE DETAILS:
+    >>> R01: Type=4w    | Load=1706/2000kg  | Stops=9   | Cost=1,318
+        R02: Type=AUV   | Load=990/1000kg   | Stops=10  | Cost=1,486
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R04: Type=4w    | Load=1650/2000kg  | Stops=6   | Cost=1,241
+    >>> R05: Type=6w    | Load=2920/7000kg  | Stops=11  | Cost=2,117
+    >>> R06: Type=6w    | Load=3357/7000kg  | Stops=8   | Cost=2,049
+        R07: Type=AUV   | Load=948/1000kg   | Stops=8   | Cost=1,449
+        R08: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R09: Type=AUV   | Load=943/1000kg   | Stops=8   | Cost=1,104
+    >>> R10: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R11: Type=6w    | Load=6423/7000kg  | Stops=9   | Cost=1,692
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R13: Type=4w    | Load=1965/2000kg  | Stops=6   | Cost=1,042
+    >>> R14: Type=6w    | Load=4314/7000kg  | Stops=10  | Cost=2,162
+        R15: Type=AUV   | Load=985/1000kg   | Stops=5   | Cost=1,145
+    >>> R16: Type=6w    | Load=4430/7000kg  | Stops=9   | Cost=1,335
+        R17: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R18: Type=MC    | Load=139/150kg    | Stops=2   | Cost=613
+    >>> R19: Type=6w    | Load=3100/7000kg  | Stops=8   | Cost=1,815
+    >>> R20: Type=6w    | Load=4624/7000kg  | Stops=9   | Cost=1,863
+        R21: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R22: Type=AUV   | Load=975/1000kg   | Stops=8   | Cost=1,464
+    >>> R23: Type=4w    | Load=1903/2000kg  | Stops=6   | Cost=1,189
+    >>> R24: Type=6w    | Load=2428/7000kg  | Stops=9   | Cost=1,333
+    >>> R25: Type=6w    | Load=6096/7000kg  | Stops=10  | Cost=2,358
+    >>> R26: Type=6w    | Load=4523/7000kg  | Stops=10  | Cost=2,020
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 6] SUMMARY:
+  Total Cost: 32,589.78
+  Total Routes: 26
+  Unassigned: 0
+  Mean Util: 64.23%
+  > ROUTE DETAILS:
+    >>> R01: Type=4w    | Load=1706/2000kg  | Stops=9   | Cost=1,318
+        R02: Type=AUV   | Load=990/1000kg   | Stops=10  | Cost=1,486
+        R03: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R04: Type=4w    | Load=1650/2000kg  | Stops=6   | Cost=1,241
+    >>> R05: Type=6w    | Load=2920/7000kg  | Stops=11  | Cost=2,117
+    >>> R06: Type=6w    | Load=3357/7000kg  | Stops=8   | Cost=2,049
+        R07: Type=AUV   | Load=948/1000kg   | Stops=8   | Cost=1,449
+        R08: Type=MC    | Load=50/150kg     | Stops=1   | Cost=386
+        R09: Type=AUV   | Load=943/1000kg   | Stops=8   | Cost=1,104
+    >>> R10: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R11: Type=6w    | Load=6423/7000kg  | Stops=9   | Cost=1,692
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R13: Type=4w    | Load=1965/2000kg  | Stops=6   | Cost=1,042
+    >>> R14: Type=6w    | Load=4314/7000kg  | Stops=10  | Cost=2,162
+        R15: Type=AUV   | Load=985/1000kg   | Stops=5   | Cost=1,145
+    >>> R16: Type=6w    | Load=4430/7000kg  | Stops=9   | Cost=1,335
+        R17: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R18: Type=MC    | Load=139/150kg    | Stops=2   | Cost=613
+    >>> R19: Type=6w    | Load=3100/7000kg  | Stops=8   | Cost=1,815
+    >>> R20: Type=6w    | Load=4624/7000kg  | Stops=9   | Cost=1,863
+        R21: Type=MC    | Load=27/150kg     | Stops=1   | Cost=448
+        R22: Type=AUV   | Load=975/1000kg   | Stops=8   | Cost=1,464
+    >>> R23: Type=4w    | Load=1903/2000kg  | Stops=6   | Cost=1,189
+    >>> R24: Type=6w    | Load=2428/7000kg  | Stops=9   | Cost=1,333
+    >>> R25: Type=6w    | Load=6096/7000kg  | Stops=10  | Cost=2,358
+    >>> R26: Type=6w    | Load=4523/7000kg  | Stops=10  | Cost=2,020
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 7] SUMMARY:
+  Total Cost: 32,330.83
+  Total Routes: 25
+  Unassigned: 0
+  Mean Util: 69.68%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=2569/7000kg  | Stops=8   | Cost=1,517
+        R02: Type=AUV   | Load=984/1000kg   | Stops=10  | Cost=1,464
+    >>> R03: Type=4w    | Load=1924/2000kg  | Stops=9   | Cost=1,261
+    >>> R04: Type=6w    | Load=3502/7000kg  | Stops=10  | Cost=2,072
+    >>> R05: Type=6w    | Load=4242/7000kg  | Stops=8   | Cost=2,166
+    >>> R06: Type=4w    | Load=1810/2000kg  | Stops=11  | Cost=1,807
+        R07: Type=AUV   | Load=934/1000kg   | Stops=2   | Cost=566
+        R08: Type=AUV   | Load=693/1000kg   | Stops=6   | Cost=1,007
+    >>> R09: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R10: Type=6w    | Load=4597/7000kg  | Stops=9   | Cost=1,946
+        R11: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R12: Type=4w    | Load=1940/2000kg  | Stops=5   | Cost=1,034
+    >>> R13: Type=6w    | Load=3248/7000kg  | Stops=10  | Cost=2,190
+        R14: Type=AUV   | Load=981/1000kg   | Stops=8   | Cost=1,194
+    >>> R15: Type=4w    | Load=1785/2000kg  | Stops=2   | Cost=762
+        R16: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R17: Type=MC    | Load=89/150kg     | Stops=2   | Cost=484
+    >>> R18: Type=6w    | Load=6522/7000kg  | Stops=9   | Cost=1,710
+    >>> R19: Type=6w    | Load=3725/7000kg  | Stops=9   | Cost=1,752
+        R20: Type=MC    | Load=139/150kg    | Stops=2   | Cost=544
+        R21: Type=AUV   | Load=983/1000kg   | Stops=7   | Cost=1,332
+    >>> R22: Type=6w    | Load=2970/7000kg  | Stops=8   | Cost=1,397
+    >>> R23: Type=6w    | Load=3059/7000kg  | Stops=9   | Cost=1,252
+    >>> R24: Type=6w    | Load=6840/7000kg  | Stops=11  | Cost=2,344
+    >>> R25: Type=4w    | Load=1842/2000kg  | Stops=9   | Cost=1,750
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 8] SUMMARY:
+  Total Cost: 32,330.83
+  Total Routes: 25
+  Unassigned: 0
+  Mean Util: 69.68%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=2569/7000kg  | Stops=8   | Cost=1,517
+        R02: Type=AUV   | Load=984/1000kg   | Stops=10  | Cost=1,464
+    >>> R03: Type=4w    | Load=1924/2000kg  | Stops=9   | Cost=1,261
+    >>> R04: Type=6w    | Load=3502/7000kg  | Stops=10  | Cost=2,072
+    >>> R05: Type=6w    | Load=4242/7000kg  | Stops=8   | Cost=2,166
+    >>> R06: Type=4w    | Load=1810/2000kg  | Stops=11  | Cost=1,807
+        R07: Type=AUV   | Load=934/1000kg   | Stops=2   | Cost=566
+        R08: Type=AUV   | Load=693/1000kg   | Stops=6   | Cost=1,007
+    >>> R09: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R10: Type=6w    | Load=4597/7000kg  | Stops=9   | Cost=1,946
+        R11: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R12: Type=4w    | Load=1940/2000kg  | Stops=5   | Cost=1,034
+    >>> R13: Type=6w    | Load=3248/7000kg  | Stops=10  | Cost=2,190
+        R14: Type=AUV   | Load=981/1000kg   | Stops=8   | Cost=1,194
+    >>> R15: Type=4w    | Load=1785/2000kg  | Stops=2   | Cost=762
+        R16: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R17: Type=MC    | Load=89/150kg     | Stops=2   | Cost=484
+    >>> R18: Type=6w    | Load=6522/7000kg  | Stops=9   | Cost=1,710
+    >>> R19: Type=6w    | Load=3725/7000kg  | Stops=9   | Cost=1,752
+        R20: Type=MC    | Load=139/150kg    | Stops=2   | Cost=544
+        R21: Type=AUV   | Load=983/1000kg   | Stops=7   | Cost=1,332
+    >>> R22: Type=6w    | Load=2970/7000kg  | Stops=8   | Cost=1,397
+    >>> R23: Type=6w    | Load=3059/7000kg  | Stops=9   | Cost=1,252
+    >>> R24: Type=6w    | Load=6840/7000kg  | Stops=11  | Cost=2,344
+    >>> R25: Type=4w    | Load=1842/2000kg  | Stops=9   | Cost=1,750
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 9] SUMMARY:
+  Total Cost: 31,744.65
+  Total Routes: 24
+  Unassigned: 0
+  Mean Util: 74.13%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=6050/7000kg  | Stops=8   | Cost=1,875
+        R02: Type=AUV   | Load=991/1000kg   | Stops=10  | Cost=1,430
+    >>> R03: Type=4w    | Load=1838/2000kg  | Stops=8   | Cost=1,252
+    >>> R04: Type=4w    | Load=1994/2000kg  | Stops=8   | Cost=1,608
+    >>> R05: Type=4w    | Load=1993/2000kg  | Stops=8   | Cost=1,811
+    >>> R06: Type=4w    | Load=1962/2000kg  | Stops=9   | Cost=1,783
+        R07: Type=AUV   | Load=934/1000kg   | Stops=2   | Cost=566
+    >>> R08: Type=4w    | Load=1328/2000kg  | Stops=8   | Cost=1,230
+    >>> R09: Type=4w    | Load=1552/2000kg  | Stops=2   | Cost=478
+    >>> R10: Type=6w    | Load=5403/7000kg  | Stops=10  | Cost=1,740
+    >>> R11: Type=4w    | Load=1452/2000kg  | Stops=5   | Cost=901
+    >>> R12: Type=6w    | Load=3745/7000kg  | Stops=12  | Cost=2,086
+    >>> R13: Type=4w    | Load=1859/2000kg  | Stops=9   | Cost=1,503
+    >>> R14: Type=4w    | Load=1873/2000kg  | Stops=2   | Cost=696
+        R15: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+        R16: Type=MC    | Load=89/150kg     | Stops=2   | Cost=484
+    >>> R17: Type=6w    | Load=3872/7000kg  | Stops=8   | Cost=1,492
+    >>> R18: Type=6w    | Load=3616/7000kg  | Stops=9   | Cost=1,909
+        R19: Type=AUV   | Load=451/1000kg   | Stops=3   | Cost=854
+        R20: Type=AUV   | Load=986/1000kg   | Stops=7   | Cost=1,343
+    >>> R21: Type=6w    | Load=5450/7000kg  | Stops=9   | Cost=1,416
+    >>> R22: Type=6w    | Load=2792/7000kg  | Stops=9   | Cost=1,294
+    >>> R23: Type=6w    | Load=5645/7000kg  | Stops=10  | Cost=2,342
+    >>> R24: Type=4w    | Load=1371/2000kg  | Stops=9   | Cost=1,506
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 10] SUMMARY:
+  Total Cost: 30,980.31
+  Total Routes: 22
+  Unassigned: 0
+  Mean Util: 64.08%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=5332/7000kg  | Stops=8   | Cost=1,762
+        R02: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R03: Type=MC    | Load=117/150kg    | Stops=3   | Cost=514
+    >>> R04: Type=6w    | Load=2111/7000kg  | Stops=12  | Cost=1,930
+    >>> R05: Type=4w    | Load=1986/2000kg  | Stops=8   | Cost=1,789
+    >>> R06: Type=4w    | Load=1798/2000kg  | Stops=8   | Cost=1,741
+    >>> R07: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=972
+    >>> R08: Type=4w    | Load=1456/2000kg  | Stops=9   | Cost=1,264
+    >>> R09: Type=6w    | Load=4292/7000kg  | Stops=11  | Cost=2,207
+    >>> R10: Type=4w    | Load=1312/2000kg  | Stops=8   | Cost=1,031
+    >>> R11: Type=6w    | Load=4084/7000kg  | Stops=11  | Cost=1,901
+    >>> R12: Type=6w    | Load=2608/7000kg  | Stops=9   | Cost=1,474
+        R13: Type=AUV   | Load=901/1000kg   | Stops=4   | Cost=551
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R15: Type=6w    | Load=4080/7000kg  | Stops=9   | Cost=1,390
+    >>> R16: Type=6w    | Load=4397/7000kg  | Stops=8   | Cost=1,805
+        R17: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R18: Type=6w    | Load=2089/7000kg  | Stops=13  | Cost=2,230
+    >>> R19: Type=6w    | Load=5418/7000kg  | Stops=8   | Cost=1,442
+    >>> R20: Type=6w    | Load=5244/7000kg  | Stops=9   | Cost=1,573
+    >>> R21: Type=6w    | Load=4902/7000kg  | Stops=10  | Cost=2,221
+    >>> R22: Type=4w    | Load=1493/2000kg  | Stops=9   | Cost=1,511
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 11] SUMMARY:
+  Total Cost: 30,980.31
+  Total Routes: 22
+  Unassigned: 0
+  Mean Util: 64.08%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=5332/7000kg  | Stops=8   | Cost=1,762
+        R02: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R03: Type=MC    | Load=117/150kg    | Stops=3   | Cost=514
+    >>> R04: Type=6w    | Load=2111/7000kg  | Stops=12  | Cost=1,930
+    >>> R05: Type=4w    | Load=1986/2000kg  | Stops=8   | Cost=1,789
+    >>> R06: Type=4w    | Load=1798/2000kg  | Stops=8   | Cost=1,741
+    >>> R07: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=972
+    >>> R08: Type=4w    | Load=1456/2000kg  | Stops=9   | Cost=1,264
+    >>> R09: Type=6w    | Load=4292/7000kg  | Stops=11  | Cost=2,207
+    >>> R10: Type=4w    | Load=1312/2000kg  | Stops=8   | Cost=1,031
+    >>> R11: Type=6w    | Load=4084/7000kg  | Stops=11  | Cost=1,901
+    >>> R12: Type=6w    | Load=2608/7000kg  | Stops=9   | Cost=1,474
+        R13: Type=AUV   | Load=901/1000kg   | Stops=4   | Cost=551
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R15: Type=6w    | Load=4080/7000kg  | Stops=9   | Cost=1,390
+    >>> R16: Type=6w    | Load=4397/7000kg  | Stops=8   | Cost=1,805
+        R17: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R18: Type=6w    | Load=2089/7000kg  | Stops=13  | Cost=2,230
+    >>> R19: Type=6w    | Load=5418/7000kg  | Stops=8   | Cost=1,442
+    >>> R20: Type=6w    | Load=5244/7000kg  | Stops=9   | Cost=1,573
+    >>> R21: Type=6w    | Load=4902/7000kg  | Stops=10  | Cost=2,221
+    >>> R22: Type=4w    | Load=1493/2000kg  | Stops=9   | Cost=1,511
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 12] SUMMARY:
+  Total Cost: 30,980.31
+  Total Routes: 22
+  Unassigned: 0
+  Mean Util: 64.08%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=5332/7000kg  | Stops=8   | Cost=1,762
+        R02: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R03: Type=MC    | Load=117/150kg    | Stops=3   | Cost=514
+    >>> R04: Type=6w    | Load=2111/7000kg  | Stops=12  | Cost=1,930
+    >>> R05: Type=4w    | Load=1986/2000kg  | Stops=8   | Cost=1,789
+    >>> R06: Type=4w    | Load=1798/2000kg  | Stops=8   | Cost=1,741
+    >>> R07: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=972
+    >>> R08: Type=4w    | Load=1456/2000kg  | Stops=9   | Cost=1,264
+    >>> R09: Type=6w    | Load=4292/7000kg  | Stops=11  | Cost=2,207
+    >>> R10: Type=4w    | Load=1312/2000kg  | Stops=8   | Cost=1,031
+    >>> R11: Type=6w    | Load=4084/7000kg  | Stops=11  | Cost=1,901
+    >>> R12: Type=6w    | Load=2608/7000kg  | Stops=9   | Cost=1,474
+        R13: Type=AUV   | Load=901/1000kg   | Stops=4   | Cost=551
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R15: Type=6w    | Load=4080/7000kg  | Stops=9   | Cost=1,390
+    >>> R16: Type=6w    | Load=4397/7000kg  | Stops=8   | Cost=1,805
+        R17: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R18: Type=6w    | Load=2089/7000kg  | Stops=13  | Cost=2,230
+    >>> R19: Type=6w    | Load=5418/7000kg  | Stops=8   | Cost=1,442
+    >>> R20: Type=6w    | Load=5244/7000kg  | Stops=9   | Cost=1,573
+    >>> R21: Type=6w    | Load=4902/7000kg  | Stops=10  | Cost=2,221
+    >>> R22: Type=4w    | Load=1493/2000kg  | Stops=9   | Cost=1,511
+
+>>> EXECUTE: related_large -> greedy_repair (GREEDY)
+[STEP 13] SUMMARY:
+  Total Cost: 30,980.31
+  Total Routes: 22
+  Unassigned: 0
+  Mean Util: 64.08%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=5332/7000kg  | Stops=8   | Cost=1,762
+        R02: Type=MC    | Load=104/150kg    | Stops=1   | Cost=417
+        R03: Type=MC    | Load=117/150kg    | Stops=3   | Cost=514
+    >>> R04: Type=6w    | Load=2111/7000kg  | Stops=12  | Cost=1,930
+    >>> R05: Type=4w    | Load=1986/2000kg  | Stops=8   | Cost=1,789
+    >>> R06: Type=4w    | Load=1798/2000kg  | Stops=8   | Cost=1,741
+    >>> R07: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=972
+    >>> R08: Type=4w    | Load=1456/2000kg  | Stops=9   | Cost=1,264
+    >>> R09: Type=6w    | Load=4292/7000kg  | Stops=11  | Cost=2,207
+    >>> R10: Type=4w    | Load=1312/2000kg  | Stops=8   | Cost=1,031
+    >>> R11: Type=6w    | Load=4084/7000kg  | Stops=11  | Cost=1,901
+    >>> R12: Type=6w    | Load=2608/7000kg  | Stops=9   | Cost=1,474
+        R13: Type=AUV   | Load=901/1000kg   | Stops=4   | Cost=551
+        R14: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R15: Type=6w    | Load=4080/7000kg  | Stops=9   | Cost=1,390
+    >>> R16: Type=6w    | Load=4397/7000kg  | Stops=8   | Cost=1,805
+        R17: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R18: Type=6w    | Load=2089/7000kg  | Stops=13  | Cost=2,230
+    >>> R19: Type=6w    | Load=5418/7000kg  | Stops=8   | Cost=1,442
+    >>> R20: Type=6w    | Load=5244/7000kg  | Stops=9   | Cost=1,573
+    >>> R21: Type=6w    | Load=4902/7000kg  | Stops=10  | Cost=2,221
+    >>> R22: Type=4w    | Load=1493/2000kg  | Stops=9   | Cost=1,511
+
+>>> EXECUTE: related_large -> regret_3_repair (GREEDY)
+[STEP 14] SUMMARY:
+  Total Cost: 29,614.90
+  Total Routes: 21
+  Unassigned: 0
+  Mean Util: 72.54%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=3151/7000kg  | Stops=8   | Cost=2,138
+        R02: Type=MC    | Load=114/150kg    | Stops=3   | Cost=526
+    >>> R03: Type=6w    | Load=2433/7000kg  | Stops=12  | Cost=2,061
+    >>> R04: Type=6w    | Load=6151/7000kg  | Stops=10  | Cost=1,861
+    >>> R05: Type=4w    | Load=1971/2000kg  | Stops=9   | Cost=1,576
+    >>> R06: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=972
+    >>> R07: Type=4w    | Load=1973/2000kg  | Stops=8   | Cost=1,283
+    >>> R08: Type=6w    | Load=6592/7000kg  | Stops=10  | Cost=2,170
+    >>> R09: Type=4w    | Load=1315/2000kg  | Stops=9   | Cost=1,048
+    >>> R10: Type=6w    | Load=4108/7000kg  | Stops=10  | Cost=1,590
+    >>> R11: Type=4w    | Load=1955/2000kg  | Stops=8   | Cost=1,105
+        R12: Type=AUV   | Load=921/1000kg   | Stops=7   | Cost=1,079
+        R13: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R14: Type=4w    | Load=1959/2000kg  | Stops=7   | Cost=1,091
+    >>> R15: Type=6w    | Load=3212/7000kg  | Stops=9   | Cost=1,694
+        R16: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R17: Type=4w    | Load=1974/2000kg  | Stops=12  | Cost=1,838
+    >>> R18: Type=6w    | Load=6721/7000kg  | Stops=8   | Cost=1,378
+    >>> R19: Type=4w    | Load=1981/2000kg  | Stops=6   | Cost=1,078
+    >>> R20: Type=6w    | Load=4901/7000kg  | Stops=13  | Cost=2,184
+    >>> R21: Type=6w    | Load=2293/7000kg  | Stops=9   | Cost=1,722
+
+>>> EXECUTE: related_large -> regret_3_repair (GREEDY)
+[STEP 15] SUMMARY:
+  Total Cost: 29,612.05
+  Total Routes: 21
+  Unassigned: 0
+  Mean Util: 72.25%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=3954/7000kg  | Stops=8   | Cost=1,962
+        R02: Type=MC    | Load=100/150kg    | Stops=3   | Cost=450
+        R03: Type=AUV   | Load=996/1000kg   | Stops=13  | Cost=1,514
+    >>> R04: Type=6w    | Load=2770/7000kg  | Stops=9   | Cost=1,719
+    >>> R05: Type=4w    | Load=1975/2000kg  | Stops=9   | Cost=1,782
+    >>> R06: Type=6w    | Load=2548/7000kg  | Stops=5   | Cost=965
+    >>> R07: Type=4w    | Load=1998/2000kg  | Stops=9   | Cost=1,358
+    >>> R08: Type=6w    | Load=6982/7000kg  | Stops=7   | Cost=1,990
+    >>> R09: Type=4w    | Load=1354/2000kg  | Stops=9   | Cost=1,051
+    >>> R10: Type=6w    | Load=6184/7000kg  | Stops=11  | Cost=1,957
+    >>> R11: Type=4w    | Load=1998/2000kg  | Stops=9   | Cost=1,073
+    >>> R12: Type=4w    | Load=1907/2000kg  | Stops=8   | Cost=1,307
+        R13: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R14: Type=4w    | Load=1993/2000kg  | Stops=8   | Cost=1,103
+    >>> R15: Type=6w    | Load=2252/7000kg  | Stops=8   | Cost=1,680
+        R16: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R17: Type=6w    | Load=2755/7000kg  | Stops=12  | Cost=2,081
+    >>> R18: Type=6w    | Load=6721/7000kg  | Stops=8   | Cost=1,378
+    >>> R19: Type=6w    | Load=2928/7000kg  | Stops=10  | Cost=1,595
+    >>> R20: Type=6w    | Load=5054/7000kg  | Stops=12  | Cost=2,190
+    >>> R21: Type=4w    | Load=1803/2000kg  | Stops=5   | Cost=1,221
+
+>>> EXECUTE: random_large -> regret_2_repair (GREEDY)
+[STEP 16] SUMMARY:
+  Total Cost: 28,488.66
+  Total Routes: 20
+  Unassigned: 0
+  Mean Util: 69.03%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=3975/7000kg  | Stops=8   | Cost=1,850
+        R02: Type=AUV   | Load=974/1000kg   | Stops=10  | Cost=1,365
+    >>> R03: Type=4w    | Load=1916/2000kg  | Stops=8   | Cost=1,383
+        R04: Type=AUV   | Load=965/1000kg   | Stops=7   | Cost=1,449
+    >>> R05: Type=6w    | Load=3258/7000kg  | Stops=7   | Cost=1,181
+    >>> R06: Type=4w    | Load=1998/2000kg  | Stops=9   | Cost=1,358
+    >>> R07: Type=6w    | Load=6978/7000kg  | Stops=8   | Cost=1,968
+    >>> R08: Type=4w    | Load=1950/2000kg  | Stops=9   | Cost=1,048
+    >>> R09: Type=4w    | Load=1037/2000kg  | Stops=8   | Cost=1,371
+    >>> R10: Type=6w    | Load=2429/7000kg  | Stops=9   | Cost=1,476
+    >>> R11: Type=4w    | Load=1871/2000kg  | Stops=9   | Cost=1,155
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R13: Type=6w    | Load=2129/7000kg  | Stops=10  | Cost=1,245
+    >>> R14: Type=6w    | Load=4394/7000kg  | Stops=9   | Cost=1,720
+        R15: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R16: Type=6w    | Load=4476/7000kg  | Stops=12  | Cost=2,093
+    >>> R17: Type=6w    | Load=6990/7000kg  | Stops=9   | Cost=1,315
+    >>> R18: Type=6w    | Load=2626/7000kg  | Stops=10  | Cost=1,359
+    >>> R19: Type=6w    | Load=5252/7000kg  | Stops=13  | Cost=2,291
+    >>> R20: Type=6w    | Load=3052/7000kg  | Stops=8   | Cost=1,635
+
+>>> EXECUTE: random_large -> regret_2_repair (GREEDY)
+[STEP 17] SUMMARY:
+  Total Cost: 28,488.66
+  Total Routes: 20
+  Unassigned: 0
+  Mean Util: 69.03%
+  > ROUTE DETAILS:
+    >>> R01: Type=6w    | Load=3975/7000kg  | Stops=8   | Cost=1,850
+        R02: Type=AUV   | Load=974/1000kg   | Stops=10  | Cost=1,365
+    >>> R03: Type=4w    | Load=1916/2000kg  | Stops=8   | Cost=1,383
+        R04: Type=AUV   | Load=965/1000kg   | Stops=7   | Cost=1,449
+    >>> R05: Type=6w    | Load=3258/7000kg  | Stops=7   | Cost=1,181
+    >>> R06: Type=4w    | Load=1998/2000kg  | Stops=9   | Cost=1,358
+    >>> R07: Type=6w    | Load=6978/7000kg  | Stops=8   | Cost=1,968
+    >>> R08: Type=4w    | Load=1950/2000kg  | Stops=9   | Cost=1,048
+    >>> R09: Type=4w    | Load=1037/2000kg  | Stops=8   | Cost=1,371
+    >>> R10: Type=6w    | Load=2429/7000kg  | Stops=9   | Cost=1,476
+    >>> R11: Type=4w    | Load=1871/2000kg  | Stops=9   | Cost=1,155
+        R12: Type=MC    | Load=0/150kg      | Stops=1   | Cost=30
+    >>> R13: Type=6w    | Load=2129/7000kg  | Stops=10  | Cost=1,245
+    >>> R14: Type=6w    | Load=4394/7000kg  | Stops=9   | Cost=1,720
+        R15: Type=AUV   | Load=973/1000kg   | Stops=4   | Cost=949
+    >>> R16: Type=6w    | Load=4476/7000kg  | Stops=12  | Cost=2,093
+    >>> R17: Type=6w    | Load=6990/7000kg  | Stops=9   | Cost=1,315
+    >>> R18: Type=6w    | Load=2626/7000kg  | Stops=10  | Cost=1,359
+    >>> R19: Type=6w    | Load=5252/7000kg  | Stops=13  | Cost=2,291
+    >>> R20: Type=6w    | Load=3052/7000kg  | Stops=8   | Cost=1,635

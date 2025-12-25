@@ -16,3 +16,4 @@ tensorboard-data-server
 torch                     == 2.6.0     --index-url https://download.pytorch.org/whl/cu126                  
 tqdm                      == 4.67.1                                          
 sb3_contrib
+numba

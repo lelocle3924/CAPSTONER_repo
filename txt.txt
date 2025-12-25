@@ -1,1 +1,19 @@
-The #pragma: no cover line is irrelevant to our purposes
+# @title
+from google.colab import drive
+import os
+
+# 1. Mount Drive
+drive.mount('/content/drive')
+
+# 2. Di chuyển vào thư mục code
+# Thay đổi đường dẫn cho đúng với folder bạn tạo trên Drive
+project_path = '/content/drive/MyDrive/My_Capstone'
+os.chdir(project_path)
+
+print("Current Working Directory:", os.getcwd())
+
+# 3. Cài đặt thư viện (Chỉ cần chạy 1 lần mỗi khi mở Colab)
+!pip install stable-baselines3 sb3-contrib folium pandas tensorboard polyline
+
+
+!python maintrain.py -m train
