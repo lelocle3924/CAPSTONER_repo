@@ -17,3 +17,4 @@ torch                     == 2.6.0     --index-url https://download.pytorch.org/
 tqdm                      == 4.67.1                                          
 sb3_contrib
 numba
+openpyxl

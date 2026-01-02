@@ -68,7 +68,7 @@ class RealDataLoader:
             print(f"[CRITICAL] Error loading Truck Master: {e}")
             raise e
 
-    def load_day_data(self, order_csv_path: str, truck_csv_path: str) -> ProblemData:
+    def load_day_data(self, order_csv_path: str, truck_csv_path: str, override_depot_id: str = None) -> ProblemData:
         print(f"--- Loading Data Pipeline ---")
         
         # 1. LOAD FLEET
@@ -92,12 +92,17 @@ class RealDataLoader:
         depot_id_from_data = self._normalize_id(raw_depot_id)
         
         filename = os.path.basename(order_csv_path)
-        try:
-            depot_id_from_file = filename.replace('Split_TransportOrder_', '').replace('.csv', '')
-        except:
-            depot_id_from_file = depot_id_from_data
-
-        depot_id = depot_id_from_file 
+        if override_depot_id:
+            depot_id = str(override_depot_id)
+            print(f"  > [CONFIG] Using Override Cache ID: {depot_id}")
+        else:
+            filename = os.path.basename(order_csv_path)
+            try:
+                depot_id = filename.replace('Split_TransportOrder_', '').replace('.csv', '')
+                if 'orders_' in depot_id:
+                     depot_id = depot_id.replace('orders_', '')
+            except:
+                depot_id = depot_id_from_data
         
         # NOTE: node_ids here are STRINGS
         node_ids = [depot_id_from_data] + df_orders['Customer'].map(self._normalize_id).tolist()

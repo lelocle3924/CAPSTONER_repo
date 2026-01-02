@@ -5,13 +5,18 @@ from datetime import datetime
 
 @dataclass
 class PathConfig:
+    now_str = datetime.now().strftime("%m%d_%H%M")
     ORDER_PATH: str = "inputs/CleanData/Split_TransportOrder_allabove1_2513.csv"
     TRUCK_PATH: str = "inputs/MasterData/TruckMaster.csv"
     DISTANCE_TIME_PATH: str = "inputs/DistTimeMatrix"
     RESULTS_DIR: str = "results"
     LOGS_DIR: str = "logs"
     MODELS_DIR: str = "models"
-    MODEL_PATH: str = "models/VRPTW_1225_1231/vrp_model_930000_steps.zip"
+    # MODEL_PATH: str = "models/VRPTW_1225_1231/vrp_model_930000_steps.zip"
+
+    TEMP_DATA_DIR: str = "inputs/temp_days"
+    FINAL_REPORT_DIR: str = f"results/final_reports_{now_str}"
+    INFERENCE_MODEL_PATH: str = "models/final_vrp_model_1500000_steps.zip"
 
 @dataclass
 class PPOConfig:
@@ -34,6 +39,7 @@ class PPOConfig:
     total_timesteps: int = 1_500_000 # 1M for overnight run
     save_freq: int = 50000         # Save every 10k steps
     
+    # [REWARD + PENALTY COEFFICIENTS]
     reward_cost_scale: float = 5.0  # Increased weight on cost
     reward_util_lambda: float = 0.5 # Stronger push for full trucks
     stop_threshold: int = 50        # Stop episode after 50 steps of no improvement

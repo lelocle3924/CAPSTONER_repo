@@ -13,10 +13,10 @@ ppo_cfg = PPOConfig()
 alns_cfg = ALNSConfig()
 
 class RVRPEnvironment(gym.Env):
-    def __init__(self, order_csv_path, truck_csv_path, is_test_mode=False):
+    def __init__(self, order_csv_path, truck_csv_path, is_test_mode=False, override_depot_id=None):
         super().__init__()
         self.loader = RealDataLoader()
-        self.problem_data: ProblemData = self.loader.load_day_data(order_csv_path, truck_csv_path)
+        self.problem_data: ProblemData = self.loader.load_day_data(order_csv_path, truck_csv_path, override_depot_id)
         self.is_test_mode = is_test_mode
         self.alns = ALNS4PPO()
         
