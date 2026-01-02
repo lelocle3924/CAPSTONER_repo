@@ -7,23 +7,16 @@ import numpy as np
 
 from config import PPOConfig
 
-# --- CẤU HÌNH ---
 RESULTS_DIR = "results"
 PLOTS_DIR = "plots"
 
 ppo_config = PPOConfig()
-# Các nhãn tên toán tử để vẽ biểu đồ cho đẹp
-# Đảm bảo thứ tự khớp với cách bạn thêm toán tử trong vrptwenv.py
 DESTROY_OPERATORS = [
     "Random Cust.", "Random Route", "String", "Worst", "Sequence"
 ]
 REPAIR_OPERATORS = [
     "Greedy", "Criticality", "Regret"
 ]
-
-# --- CÁC HÀM VẼ BIỂU ĐỒ ---
-
-# Trong file plot_results.py
 
 def plot_learning_curve(monitor_csv_path):
     """Vẽ biểu đồ phần thưởng trung bình trong quá trình huấn luyện."""

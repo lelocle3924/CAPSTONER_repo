@@ -1,4 +1,3 @@
-# file: alns/repairopt.py
 import numpy as np
 import random
 from typing import List, Tuple, Dict, Optional, Any
@@ -41,12 +40,10 @@ def _evaluate_insertion_numba(
     prev = 0
     
     seq_len = sequence.shape[0]
-    # We iterate up to seq_len + 1 to include the new customer
     for i in range(seq_len + 1):
         if i == insert_pos:
             node = customer_idx
         else:
-            # Adjust index if we already passed the insertion point
             idx = i if i < insert_pos else i - 1
             node = sequence[idx]
             
@@ -136,7 +133,6 @@ def find_best_insertion_for_route(data: ProblemData, route: Route, customer: int
     return float('inf'), -1, None, None
 
 def _get_candidate_routes(data: ProblemData, routes: List[Route], customer: int, limit: int = 40):
-    """[OPTIMIZATION] Spatial Pruning using centroids."""
     if len(routes) <= limit:
         return range(len(routes))
     
@@ -149,7 +145,6 @@ def _get_candidate_routes(data: ProblemData, routes: List[Route], customer: int,
     return [x[1] for x in dists[:limit]]
 
 def _try_create_new_route(data: ProblemData, customer: int) -> Optional[Route]:
-    """[OPTIMIZED] Try smallest vehicle for a fresh route."""
     sorted_fleet = sorted(data.vehicle_types, key=lambda x: x.fixed_cost)
     allowed = data.allowed_vehicles[customer]
     
@@ -182,9 +177,8 @@ def create_greedy_repair_operator(data: ProblemData):
         while state.unassigned:
             customer = state.unassigned.pop()
             best_increase = float('inf')
-            best_move = None # (r_idx, pos, metrics, vehicle)
+            best_move = None
             
-            # Pruning
             candidate_indices = _get_candidate_routes(data, state.routes, customer)
             
             for r_idx in candidate_indices:
@@ -212,9 +206,7 @@ def create_greedy_repair_operator(data: ProblemData):
 
 def create_criticality_repair_operator(data: ProblemData):
     def criticality_repair(state: RvrpState, rng, data: ProblemData):
-        # Sort by Demand + Distance + TW Tightness
         state.unassigned.sort(key=lambda c: (data.demands_kg[c]/1000 + data.dist_matrix[0,c]/5000), reverse=True)
-        # Use Greedy logic on sorted list
         return create_greedy_repair_operator(data)(state, rng, data)
     return criticality_repair
 
@@ -264,7 +256,6 @@ def create_grasp_repair_operator(data: ProblemData, rcl_size: int = 3):
         while state.unassigned:
             moves = []
             for cust in state.unassigned:
-                # To keep GRASP fast, we only look at a subset of best insertions
                 candidate_indices = _get_candidate_routes(data, state.routes, cust, limit=20)
                 for r_idx in candidate_indices:
                     route = state.routes[r_idx]

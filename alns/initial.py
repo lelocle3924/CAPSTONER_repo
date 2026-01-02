@@ -1,5 +1,4 @@
-# ver 6: refactored with numba etc.
-# file: alns/initial.py
+
 import numpy as np
 from numba import njit
 from typing import List, Tuple, Dict, Optional, Any
@@ -68,7 +67,7 @@ def _find_best_vehicle_for_sequence(data: ProblemData, sequence: list[int]) -> t
 
 def one_for_one(data: ProblemData) -> RvrpState:
     """
-    [OPTIMIZED] Dummy initialization for 0.001s resets during training.
+    Dummy initialization for 0.001s resets during training.
     """
     routes = []
     # Use the cheapest vehicle available
@@ -77,23 +76,19 @@ def one_for_one(data: ProblemData) -> RvrpState:
     for i in range(1, data.num_nodes):
         # Create single-node route
         r = Route(v_type, [i])
-        # We perform a quick simulation to fill mandatory metrics
         is_f, metrics, _ = check_sequence_feasibility(data, v_type, [i])
         if metrics:
             r.total_dist_meters = metrics['total_dist_meters']
             r.total_duration_min = metrics['total_duration_min']
             r.total_load_kg = metrics['total_load_kg']
             r.total_load_cbm = metrics['total_load_cbm']
-        # Centroid is vital for repair operators
         r.update_centroid(data)
         routes.append(r)
         
     return RvrpState(routes, [])
 
 def clarke_wright_heterogeneous(data: ProblemData) -> RvrpState:
-    """
-    [OPTIMIZED] Standard CW with Numba feasibility and centroid updates.
-    """
+
     customers = [i for i in range(1, data.num_nodes)]
     initial_routes = []
     node_to_route = {}
@@ -142,7 +137,6 @@ def clarke_wright_heterogeneous(data: ProblemData) -> RvrpState:
             new_v, metrics = _find_best_vehicle_for_sequence(data, merge_seq)
             
             if new_v:
-                # Merge logic
                 r_i.node_sequence = merge_seq
                 r_i.vehicle_type = new_v
                 r_i.total_dist_meters = metrics['total_dist_meters']
@@ -153,7 +147,7 @@ def clarke_wright_heterogeneous(data: ProblemData) -> RvrpState:
                 
                 for node in r_j.node_sequence:
                     node_to_route[node] = r_i
-                r_j.node_sequence = [] # Kill route
+                r_j.node_sequence = []
                 
     final_routes = [r for r in initial_routes if len(r.node_sequence) > 0]
     unassigned = [i for i in range(1, data.num_nodes) if i not in node_to_route]

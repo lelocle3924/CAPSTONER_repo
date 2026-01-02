@@ -26,7 +26,6 @@ def make_env(is_test_mode=False):
             truck_csv_path=path_cfg.TRUCK_PATH,
             is_test_mode=is_test_mode
         )
-        # Each environment must be wrapped for the agent to see masks
         env = ActionMasker(env, mask_fn)
         return env
     return _init
@@ -67,7 +66,7 @@ def train():
         steps_to_train = ppo_cfg.total_timesteps - ppo_cfg.current_trained_timesteps
         if steps_to_train <= 0:
             logger.warning("⚠️ Target timesteps reached already. Training might stop immediately.")
-            steps_to_train = 10000 # Force train thêm một chút nếu cần
+            steps_to_train = 10000
             
         reset_timesteps = False
     else:

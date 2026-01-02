@@ -21,31 +21,24 @@ class PathConfig:
 @dataclass
 class PPOConfig:
     train_seed: int = 2025
-    # [TRIAL SETTINGS] 
-    # Use 4-8 for Colab. If CPU hits 100% and GPU is low, decrease this.
     num_envs: int = 4             
     
-    # [GPU THROUGHPUT]
-    # n_steps * num_envs = Total samples per update. 
-    # 2048 * 4 = 8192 samples per update.
     n_steps: int = 2048           
-    batch_size: int = 256         # Increased from 64 for better GPU utilization
+    batch_size: int = 256
     n_epochs: int = 10            
     learning_rate: float = 3e-4   
     ent_coef: float = 0.01        
     
-    # [TIMESTEPS]
     current_trained_timesteps: int = 930000
-    total_timesteps: int = 1_500_000 # 1M for overnight run
-    save_freq: int = 50000         # Save every 10k steps
+    total_timesteps: int = 1_500_000 
+    save_freq: int = 50000     
     
-    # [REWARD + PENALTY COEFFICIENTS]
-    reward_cost_scale: float = 5.0  # Increased weight on cost
-    reward_util_lambda: float = 0.5 # Stronger push for full trucks
-    stop_threshold: int = 50        # Stop episode after 50 steps of no improvement
+    reward_cost_scale: float = 5.0  
+    reward_util_lambda: float = 0.5 
+    stop_threshold: int = 50       
 
-    base_step_penalty: float = 0.005    # Phạt nhẹ mỗi step RL
-    operator_time_limit: float = 2.0    # Ngưỡng thời gian (giây) cho 1 cặp D+R. Vượt ngưỡng này sẽ bị phạt thêm.
+    base_step_penalty: float = 0.005   
+    operator_time_limit: float = 2.0
     operator_penalty_scale: float = 0.01
     
     device: str = "auto"
@@ -59,4 +52,4 @@ class PPOConfig:
 
 @dataclass
 class ALNSConfig:
-    num_iterations: int = 100      # 100 ALNS iterations per 1 RL Step
+    num_iterations: int = 100
